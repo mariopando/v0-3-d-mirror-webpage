@@ -78,11 +78,6 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
     mirror.position.z = depthUnits / 2 + 0.001
     scene.add(mirror)
 
-    // Create LED strips
-    const numLeds = 20
-    const ledSize = 0.05
-    const leds: THREE.Mesh[] = []
-
     // Function to get color based on position and ledColor setting
     const getLedColor = (position: number) => {
       if (ledColor === "rainbow") {
@@ -101,6 +96,13 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
         return new THREE.Color(0xff0088) // Pink default
       }
     }
+
+    // OPTIMIZATION: Instead of using point lights, we'll use emissive materials
+    // to create the LED effect, which is much more efficient for WebGL
+
+    const ledSize = 0.05
+    const leds: THREE.Mesh[] = []
+    const numLeds = 20
 
     // Create LED strips around the perimeter
     const createPerimeterLeds = () => {
@@ -137,14 +139,20 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
       }
     }
 
-    // Function to create an LED
+    // Function to create an LED with emissive material instead of a point light
     const createLed = (x: number, y: number, position: number) => {
       const ledGeometry = new THREE.BoxGeometry(ledSize, ledSize, 0.05)
-      const ledMaterial = new THREE.MeshBasicMaterial({
-        color: getLedColor(position),
+      const color = getLedColor(position)
+
+      // Use emissive material to create self-illuminating effect without actual lights
+      const ledMaterial = new THREE.MeshStandardMaterial({
+        color: 0x000000, // Base color is black
+        emissive: color, // The color that glows
+        emissiveIntensity: 2, // How bright it glows
         transparent: true,
         opacity: 1.0,
       })
+
       const led = new THREE.Mesh(ledGeometry, ledMaterial)
       led.position.set(x, y, depthUnits / 2 + 0.02)
       scene.add(led)
@@ -154,10 +162,11 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
       createInfiniteEffect(x, y, position)
     }
 
-    // Create the infinite mirror effect
+    // Create the infinite mirror effect with emissive materials
     const createInfiniteEffect = (x: number, y: number, position: number) => {
+      // OPTIMIZATION: Reduce the number of points for better performance
       const maxDepth = 15
-      const numPoints = 10
+      const numPoints = 8 // Reduced from 10
 
       for (let i = 0; i < numPoints; i++) {
         const depth = ((i + 1) / numPoints) * maxDepth
@@ -169,8 +178,13 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
         const scaledY = y * scale
 
         const pointGeometry = new THREE.BoxGeometry(ledSize * 0.8, ledSize * 0.8, 0.02)
-        const pointMaterial = new THREE.MeshBasicMaterial({
-          color: getLedColor(position),
+        const color = getLedColor(position)
+
+        // Use emissive material for the receding points too
+        const pointMaterial = new THREE.MeshStandardMaterial({
+          color: 0x000000,
+          emissive: color,
+          emissiveIntensity: 1.5 * (1 - (i / numPoints) * 0.7),
           transparent: true,
           opacity: 1 - (i / numPoints) * 0.7,
         })
@@ -185,11 +199,11 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
     // Create the LEDs
     createPerimeterLeds()
 
-    // Add ambient light
+    // OPTIMIZATION: Use just one ambient light for the entire scene
     const ambientLight = new THREE.AmbientLight(0x404040)
     scene.add(ambientLight)
 
-    // Add directional light
+    // OPTIMIZATION: Use just one directional light for the frame
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5)
     directionalLight.position.set(1, 1, 1)
     scene.add(directionalLight)
@@ -200,6 +214,18 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
 
       // Update controls
       controls.update()
+
+      // Animate LEDs with a wave pattern
+      const time = performance.now() * 0.001
+      leds.forEach((led, index) => {
+        const material = led.material as THREE.MeshStandardMaterial
+        if (material.emissiveIntensity !== undefined) {
+          // Modulate the emissive intensity to create the pulsing effect
+          const baseIntensity = index < numLeds * 4 ? 2 : 1.5 * (1 - (Math.floor(index / (numLeds * 4)) / 8) * 0.7)
+          const pulseAmount = index < numLeds * 4 ? 0.5 : 0.3
+          material.emissiveIntensity = baseIntensity * (1 + pulseAmount * Math.sin(time * 2 + index * 0.1))
+        }
+      })
 
       // Render scene
       renderer.render(scene, camera)
