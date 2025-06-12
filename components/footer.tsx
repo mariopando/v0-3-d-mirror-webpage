@@ -7,9 +7,9 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4 text-white">InfinityMirrors</h3>
+            <h3 className="text-xl font-bold mb-4 text-white">TallerDigital</h3>
             <p className="mb-4">
-              Creating stunning infinity mirrors with premium materials and cutting-edge LED technology.
+              Creando impresionantes espejos infinitos con materiales premium y tecnología LED de vanguardia.
             </p>
             <div className="flex space-x-4">
               <Link href="#" className="hover:text-purple-400 transition-colors">
@@ -28,76 +28,76 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-white">Shop</h4>
+            <h4 className="font-semibold mb-4 text-white">Tienda</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="#" className="hover:text-purple-400 transition-colors">
-                  All Products
+                <Link href="/productos" className="hover:text-purple-400 transition-colors">
+                  Todos los Productos
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-purple-400 transition-colors">
-                  Custom Mirrors
+                <Link href="/productos/personalizados" className="hover:text-purple-400 transition-colors">
+                  Espejos Personalizados
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-purple-400 transition-colors">
-                  LED Controllers
+                <Link href="/productos/controladores" className="hover:text-purple-400 transition-colors">
+                  Controladores LED
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-purple-400 transition-colors">
-                  Accessories
+                <Link href="/productos/accesorios" className="hover:text-purple-400 transition-colors">
+                  Accesorios
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-white">Support</h4>
+            <h4 className="font-semibold mb-4 text-white">Soporte</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="#" className="hover:text-purple-400 transition-colors">
-                  FAQ
+                <Link href="/faq" className="hover:text-purple-400 transition-colors">
+                  Preguntas Frecuentes
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-purple-400 transition-colors">
-                  Shipping
+                <Link href="/envios" className="hover:text-purple-400 transition-colors">
+                  Envíos
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-purple-400 transition-colors">
-                  Returns
+                <Link href="/devoluciones" className="hover:text-purple-400 transition-colors">
+                  Devoluciones
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-purple-400 transition-colors">
-                  Contact Us
+                <Link href="/contacto" className="hover:text-purple-400 transition-colors">
+                  Contáctanos
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-white">Contact</h4>
+            <h4 className="font-semibold mb-4 text-white">Contacto</h4>
             <address className="not-italic">
-              <p>123 Mirror Street</p>
-              <p>New York, NY 10001</p>
-              <p className="mt-2">info@infinitymirrors.com</p>
-              <p>+1 (555) 123-4567</p>
+              <p>Av. Providencia 1234</p>
+              <p>Santiago, Chile</p>
+              <p className="mt-2">info@tallerdigital.cl</p>
+              <p>+56 2 2123 4567</p>
             </address>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between">
-          <p>&copy; 2023 InfinityMirrors. All rights reserved.</p>
+          <p>&copy; 2023 TallerDigital. Todos los derechos reservados.</p>
           <div className="flex space-x-4 mt-4 md:mt-0">
-            <Link href="#" className="hover:text-purple-400 transition-colors">
-              Privacy Policy
+            <Link href="/privacidad" className="hover:text-purple-400 transition-colors">
+              Política de Privacidad
             </Link>
-            <Link href="#" className="hover:text-purple-400 transition-colors">
-              Terms of Service
+            <Link href="/terminos" className="hover:text-purple-400 transition-colors">
+              Términos de Servicio
             </Link>
           </div>
         </div>

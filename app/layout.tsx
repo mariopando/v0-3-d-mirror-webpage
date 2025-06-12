@@ -1,11 +1,12 @@
 import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
+import { CartProvider } from "@/context/cart-context"
 
 export const metadata: Metadata = {
-  title: "Infinity Mirrors | Custom LED Infinity Mirror Shop",
+  title: "TallerDigital | Espejos Infinitos LED Personalizados",
   description:
-    "Premium custom infinity mirrors with LED lighting. Create your own unique infinity mirror with adjustable dimensions and LED colors.",
+    "Espejos infinitos premium con iluminación LED. Crea tu propio espejo infinito único con dimensiones y colores LED ajustables.",
     generator: 'v0.dev'
 }
 
@@ -15,8 +16,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-black text-white">{children}</body>
+    <html lang="es" className="dark">
+      <body className="min-h-screen bg-black text-white">
+        <CartProvider>{children}</CartProvider>
+      </body>
     </html>
   )
 }

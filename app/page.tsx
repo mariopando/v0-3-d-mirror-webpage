@@ -7,6 +7,8 @@ import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ShoppingCart } from "lucide-react"
+import { useCart } from "@/context/cart-context"
+import { formatCurrency } from "@/lib/utils"
 
 export default function Home() {
   const [width, setWidth] = useState(60)
@@ -14,14 +16,34 @@ export default function Home() {
   const [depth, setDepth] = useState(10)
   const [ledColor, setLedColor] = useState("rainbow")
   const [isClient, setIsClient] = useState(false)
+  const { addToCart } = useCart()
 
   // Fix hydration issues
   useEffect(() => {
     setIsClient(true)
   }, [])
 
+  const calculatePrice = () => {
+    // Base price in Chilean Pesos (approx. 199 USD = ~180,000 CLP)
+    const basePrice = 180000
+    // Add price based on size (0.015 USD = ~13.5 CLP per square cm)
+    return basePrice + width * height * 13.5
+  }
+
   const handleAddToCart = () => {
-    alert(`Added to cart: ${width}cm × ${height}cm Infinity Mirror with ${ledColor} LEDs`)
+    const product = {
+      id: `custom-${width}-${height}-${depth}-${ledColor}`,
+      name: `Espejo Infinito ${width}cm × ${height}cm`,
+      price: calculatePrice(),
+      width,
+      height,
+      depth,
+      ledColor,
+      quantity: 1,
+      image: "/product-image.jpg", // Default image
+    }
+
+    addToCart(product)
   }
 
   return (
@@ -39,11 +61,12 @@ export default function Home() {
           </div>
 
           <div className="w-full lg:w-1/2">
-            <h1 className="text-4xl font-bold mb-4">Custom Infinity Mirror</h1>
+            <h1 className="text-4xl font-bold mb-4">Espejo Infinito Personalizado</h1>
             <p className="text-gray-300 mb-6">
-              Experience the mesmerizing depth of our premium infinity mirrors. Each mirror is handcrafted with
-              precision and features high-quality LED lighting that creates a stunning infinite tunnel effect. Customize
-              your dimensions and LED color to create the perfect statement piece for your space.
+              Experimenta la fascinante profundidad de nuestros espejos infinitos premium. Cada espejo está fabricado
+              artesanalmente con precisión y cuenta con iluminación LED de alta calidad que crea un impresionante efecto
+              de túnel infinito. Personaliza las dimensiones y el color de los LED para crear la pieza perfecta para tu
+              espacio.
             </p>
 
             <div className="bg-gray-900 rounded-lg p-6 mb-6">
@@ -59,52 +82,66 @@ export default function Home() {
               />
 
               <div className="mt-6 flex flex-col sm:flex-row gap-4">
-                <div className="text-2xl font-bold">${(width * height * 0.015 + 199).toFixed(2)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(calculatePrice())}</div>
                 <Button
                   onClick={handleAddToCart}
                   className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 >
                   <ShoppingCart className="mr-2 h-5 w-5" />
-                  Add to Cart
+                  Agregar al Carrito
                 </Button>
               </div>
             </div>
 
             <div className="bg-gray-900 rounded-lg p-6">
-              <h3 className="text-xl font-semibold mb-2">Product Specifications</h3>
+              <h3 className="text-xl font-semibold mb-2">Especificaciones del Producto</h3>
               <ul className="list-disc list-inside space-y-1 text-gray-300">
                 <li>
-                  Dimensions: {width}cm × {height}cm × {depth}cm
+                  Dimensiones: {width}cm × {height}cm × {depth}cm
                 </li>
-                <li>Frame: Premium black aluminum</li>
-                <li>LED Type: {ledColor === "rainbow" ? "RGB Rainbow Gradient" : ledColor} LEDs</li>
-                <li>Power: Standard wall outlet (adapter included)</li>
-                <li>Remote control included</li>
-                <li>2-year warranty</li>
+                <li>Marco: Aluminio negro premium</li>
+                <li>
+                  Tipo de LED:{" "}
+                  {ledColor === "rainbow"
+                    ? "Gradiente RGB Arcoíris"
+                    : ledColor === "white"
+                      ? "Blanco"
+                      : ledColor === "blue"
+                        ? "Azul"
+                        : ledColor === "green"
+                          ? "Verde"
+                          : ledColor === "purple"
+                            ? "Púrpura"
+                            : "Rosa"}
+                </li>
+                <li>Alimentación: Enchufe estándar (adaptador incluido)</li>
+                <li>Control remoto incluido</li>
+                <li>2 años de garantía</li>
               </ul>
             </div>
           </div>
         </section>
 
         <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 text-center">Why Choose Our Infinity Mirrors?</h2>
+          <h2 className="text-3xl font-bold mb-6 text-center">¿Por qué elegir nuestros Espejos Infinitos?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-gray-900 p-6 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">Premium Quality</h3>
+              <h3 className="text-xl font-semibold mb-2">Calidad Premium</h3>
               <p className="text-gray-300">
-                Handcrafted with premium materials and precision engineering for a flawless infinity effect.
+                Fabricados artesanalmente con materiales premium e ingeniería de precisión para un efecto infinito
+                impecable.
               </p>
             </div>
             <div className="bg-gray-900 p-6 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">Customizable</h3>
+              <h3 className="text-xl font-semibold mb-2">Personalizable</h3>
               <p className="text-gray-300">
-                Choose your dimensions, LED colors, and frame style to create your perfect mirror.
+                Elige las dimensiones, colores LED y estilo del marco para crear tu espejo perfecto.
               </p>
             </div>
             <div className="bg-gray-900 p-6 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">Easy Installation</h3>
+              <h3 className="text-xl font-semibold mb-2">Fácil Instalación</h3>
               <p className="text-gray-300">
-                Simple wall mounting system and plug-and-play power connection. No special wiring needed.
+                Sistema de montaje en pared simple y conexión plug-and-play. No se necesita cableado especial.
               </p>
             </div>
           </div>
