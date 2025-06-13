@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import InfinityMirror from "@/components/infinity-mirror"
+import dynamic from "next/dynamic"
 import ProductControls from "@/components/product-controls"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
+import InfinityMirrorFallback from "@/components/infinity-mirror-fallback"
+
+// Importar dinámicamente el componente InfinityMirror sin SSR
+const InfinityMirror = dynamic(() => import("@/components/infinity-mirror"), {
+  ssr: false,
+  loading: () => <InfinityMirrorFallback />,
+})
 
 export default function Home() {
   const [width, setWidth] = useState(60)

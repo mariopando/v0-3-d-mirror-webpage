@@ -1,7 +1,6 @@
 "use client"
+
 import { useEffect, useRef, useState } from "react"
-import * as THREE from "three"
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 interface InfinityMirrorProps {
   width: number
@@ -11,250 +10,169 @@ interface InfinityMirrorProps {
 }
 
 export default function InfinityMirror({ width, height, depth, ledColor }: InfinityMirrorProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Convert dimensions from cm to 3D units (1 unit = 10cm)
-  const widthUnits = width / 10
-  const heightUnits = height / 10
-  const depthUnits = depth / 10
-
+  // Simplificamos el componente para evitar problemas con Three.js
+  // Creamos una versión simplificada usando Canvas 2D
   useEffect(() => {
-    let animationId: number
-    let renderer: THREE.WebGLRenderer
-    let controls: any
+    const canvas = canvasRef.current
+    if (!canvas) return
 
-    // Dynamically import Three.js only on the client side
-    const initThree = async () => {
-      if (!containerRef.current) return
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
 
-      // Clear previous content safely
-      if (containerRef.current) {
-        containerRef.current.innerHTML = ""
+    // Establecer dimensiones del canvas
+    canvas.width = 400
+    canvas.height = 400
+
+    // Función para obtener color basado en la posición y configuración de LED
+    const getLedColor = (position: number): string => {
+      if (ledColor === "rainbow") {
+        // Crear gradiente arcoíris
+        const hue = (position * 360) % 360
+        return `hsl(${hue}, 100%, 50%)`
+      } else if (ledColor === "white") {
+        return "#ffffff"
+      } else if (ledColor === "blue") {
+        return "#0088ff"
+      } else if (ledColor === "green") {
+        return "#00ff88"
+      } else if (ledColor === "purple") {
+        return "#8800ff"
+      } else {
+        return "#ff0088" // Rosa por defecto
+      }
+    }
+
+    // Función para dibujar el espejo
+    const drawMirror = () => {
+      if (!ctx) return
+
+      // Limpiar canvas
+      ctx.fillStyle = "#000000"
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Dibujar marco
+      ctx.strokeStyle = "#333333"
+      ctx.lineWidth = 10
+      ctx.strokeRect(50, 50, canvas.width - 100, canvas.height - 100)
+
+      // Calcular proporciones
+      const mirrorWidth = canvas.width - 100
+      const mirrorHeight = canvas.height - 100
+      const centerX = canvas.width / 2
+      const centerY = canvas.height / 2
+
+      // Dibujar efecto de profundidad
+      const maxDepth = 8
+      for (let d = maxDepth; d > 0; d--) {
+        const scale = 1 - d * 0.1
+        const rectWidth = mirrorWidth * scale
+        const rectHeight = mirrorHeight * scale
+        const x = centerX - rectWidth / 2
+        const y = centerY - rectHeight / 2
+
+        // Dibujar rectángulo de fondo para cada nivel
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.7 + d * 0.03})`
+        ctx.fillRect(x, y, rectWidth, rectHeight)
       }
 
-      // Scene setup
-      const scene = new THREE.Scene()
-      scene.background = new THREE.Color(0x000000)
-
-      // Camera setup
-      const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000)
-      camera.position.z = Math.max(widthUnits, heightUnits) * 1.2
-
-      // Renderer setup
-      renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        powerPreference: "high-performance",
-      })
-      renderer.setSize(400, 400)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-      containerRef.current.appendChild(renderer.domElement)
-
-      // Controls setup
-      controls = new OrbitControls(camera, renderer.domElement)
-      controls.enableDamping = true
-      controls.dampingFactor = 0.05
-      controls.enableZoom = false
-      controls.enablePan = false
-      controls.rotateSpeed = 0.5
-      controls.autoRotate = true
-      controls.autoRotateSpeed = 1
-
-      // Create frame
-      const frameThickness = 0.5
-      const frameGeometry = new THREE.BoxGeometry(
-        widthUnits + frameThickness * 2,
-        heightUnits + frameThickness * 2,
-        depthUnits,
-      )
-      const frameMaterial = new THREE.MeshStandardMaterial({
-        transmission: 0.9, // Amount of light passing through
-        opacity: 0.3, // Overall transparency
-        reflectivity: 0.7, // Reflectivity (0 to 1)
-        ior: 1.5, // Index of Refraction
-        envMapIntensity: 0.9, // Environment map intensity
-        roughness: 0.1, // Low roughness for a smooth glass look
-        metalness: 1, // Non-metallic material
-        clearcoat: 1, // Simulates a thin clear coat layer
-        transparent: true,
-      })
-      const frame = new THREE.Mesh(frameGeometry, frameMaterial)
-      scene.add(frame)
-
-      // Function to get color based on position and ledColor setting
-      const getLedColor = (position: number) => {
-        if (ledColor === "rainbow") {
-          // Create rainbow gradient
-          const hue = (position + 0.5) / 2
-          return new THREE.Color().setHSL(hue, 1, 0.5)
-        } else if (ledColor === "white") {
-          return new THREE.Color(0xffffff)
-        } else if (ledColor === "blue") {
-          return new THREE.Color(0x0088ff)
-        } else if (ledColor === "green") {
-          return new THREE.Color(0x00ff88)
-        } else if (ledColor === "purple") {
-          return new THREE.Color(0x8800ff)
-        } else {
-          return new THREE.Color(0xff0088) // Pink default
-        }
-      }
-
-      // OPTIMIZATION: Instead of using point lights, we'll use emissive materials
-      // to create the LED effect, which is much more efficient for WebGL
-
-      const ledSize = 0.05
-      const leds: THREE.Mesh[] = []
+      // Dibujar LEDs
       const numLeds = 20
+      const ledSize = 4
 
-      // Create LED strips around the perimeter
-      const createPerimeterLeds = () => {
-        // Top edge
-        for (let i = 0; i < numLeds; i++) {
-          const x = -widthUnits / 2 + (widthUnits * i) / (numLeds - 1)
-          const y = heightUnits / 2
-          const position = i / (numLeds - 1)
-          createLed(x, y, position)
-        }
-
-        // Right edge
-        for (let i = 0; i < numLeds; i++) {
-          const x = widthUnits / 2
-          const y = heightUnits / 2 - (heightUnits * i) / (numLeds - 1)
-          const position = (i + numLeds) / (numLeds * 4 - 4)
-          createLed(x, y, position)
-        }
-
-        // Bottom edge
-        for (let i = 0; i < numLeds; i++) {
-          const x = widthUnits / 2 - (widthUnits * i) / (numLeds - 1)
-          const y = -heightUnits / 2
-          const position = (i + numLeds * 2) / (numLeds * 4 - 4)
-          createLed(x, y, position)
-        }
-
-        // Left edge
-        for (let i = 0; i < numLeds; i++) {
-          const x = -widthUnits / 2
-          const y = -heightUnits / 2 + (heightUnits * i) / (numLeds - 1)
-          const position = (i + numLeds * 3) / (numLeds * 4 - 4)
-          createLed(x, y, position)
-        }
-      }
-
-      // Function to create an LED with emissive material instead of a point light
-      const createLed = (x: number, y: number, position: number) => {
-        const ledGeometry = new THREE.BoxGeometry(ledSize, ledSize, 0.05)
+      // Función para dibujar un LED y su reflejo
+      const drawLed = (x: number, y: number, position: number) => {
         const color = getLedColor(position)
 
-        // Use emissive material to create self-illuminating effect without actual lights
-        const ledMaterial = new THREE.MeshStandardMaterial({
-          color: 0x000000, // Base color is black
-          emissive: color, // The color that glows
-          emissiveIntensity: 2, // How bright it glows
-          transparent: true,
-          opacity: 1.0,
-        })
+        // LED principal
+        ctx.fillStyle = color
+        ctx.beginPath()
+        ctx.arc(x, y, ledSize, 0, Math.PI * 2)
+        ctx.fill()
 
-        const led = new THREE.Mesh(ledGeometry, ledMaterial)
-        led.position.set(x, y, depthUnits / 2 + 0.02)
-        scene.add(led)
-        leds.push(led)
+        // Brillo alrededor del LED
+        const gradient = ctx.createRadialGradient(x, y, ledSize, x, y, ledSize * 3)
+        gradient.addColorStop(0, color)
+        gradient.addColorStop(1, "rgba(0,0,0,0)")
+        ctx.fillStyle = gradient
+        ctx.beginPath()
+        ctx.arc(x, y, ledSize * 3, 0, Math.PI * 2)
+        ctx.fill()
 
-        // Create the infinite effect for this LED
-        createInfiniteEffect(x, y, position)
-      }
+        // Reflejos de profundidad
+        for (let d = 1; d <= 5; d++) {
+          const scale = 1 - d * 0.15
+          const reflectX = centerX - (centerX - x) * scale
+          const reflectY = centerY - (centerY - y) * scale
+          const opacity = 1 - d * 0.18
 
-      // Create the infinite mirror effect with emissive materials
-      const createInfiniteEffect = (x: number, y: number, position: number) => {
-        // OPTIMIZATION: Reduce the number of points for better performance
-        const maxDepth = 15
-        const numPoints = 8 // Reduced from 10
-
-        for (let i = 0; i < numPoints; i++) {
-          const depth = ((i + 1) / numPoints) * maxDepth
-          const z = depthUnits / 2 - depth * 0.2
-
-          // Scale coordinates slightly to create perspective
-          const scale = 0.97 - i * 0.01
-          const scaledX = x * scale
-          const scaledY = y * scale
-
-          const pointGeometry = new THREE.BoxGeometry(ledSize * 0.8, ledSize * 0.8, 0.02)
-          const color = getLedColor(position)
-
-          // Use emissive material for the receding points too
-          const pointMaterial = new THREE.MeshStandardMaterial({
-            color: 0x000000,
-            emissive: color,
-            emissiveIntensity: 1.5 * (1 - (i / numPoints) * 0.7),
-            transparent: true,
-            opacity: 1 - (i / numPoints) * 0.7,
-          })
-
-          const point = new THREE.Mesh(pointGeometry, pointMaterial)
-          point.position.set(scaledX, scaledY, z)
-          scene.add(point)
-          leds.push(point)
+          ctx.fillStyle = color
+          ctx.globalAlpha = opacity
+          ctx.beginPath()
+          ctx.arc(reflectX, reflectY, ledSize * (1 - d * 0.1), 0, Math.PI * 2)
+          ctx.fill()
+          ctx.globalAlpha = 1
         }
       }
 
-      // Create the LEDs
-      createPerimeterLeds()
-
-      // OPTIMIZATION: Use just one ambient light for the entire scene
-      const ambientLight = new THREE.AmbientLight(0x404040)
-      scene.add(ambientLight)
-
-      // OPTIMIZATION: Use just one directional light for the frame
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5)
-      directionalLight.position.set(1, 1, 1)
-      scene.add(directionalLight)
-
-      // Animation loop
-      const animate = () => {
-        animationId = requestAnimationFrame(animate)
-
-        // Update controls
-        controls.update()
-
-        // Animate LEDs with a wave pattern
-        const time = performance.now() * 0.001
-        leds.forEach((led, index) => {
-          const material = led.material as THREE.MeshStandardMaterial
-          if (material.emissiveIntensity !== undefined) {
-            // Modulate the emissive intensity to create the pulsing effect
-            const baseIntensity = index < numLeds * 4 ? 2 : 1.5 * (1 - (Math.floor(index / (numLeds * 4)) / 8) * 0.7)
-            const pulseAmount = index < numLeds * 4 ? 0.5 : 0.3
-            material.emissiveIntensity = baseIntensity * (1 + pulseAmount * Math.sin(time * 2 + index * 0.1))
-          }
-        })
-
-        // Render scene
-        renderer.render(scene, camera)
+      // Dibujar LEDs en los bordes
+      // Borde superior
+      for (let i = 0; i < numLeds; i++) {
+        const x = 50 + (mirrorWidth * i) / (numLeds - 1)
+        const y = 50
+        drawLed(x, y, i / numLeds)
       }
 
-      animate()
-      setIsLoading(false)
+      // Borde derecho
+      for (let i = 0; i < numLeds; i++) {
+        const x = canvas.width - 50
+        const y = 50 + (mirrorHeight * i) / (numLeds - 1)
+        drawLed(x, y, (i + numLeds) / (numLeds * 4))
+      }
+
+      // Borde inferior
+      for (let i = 0; i < numLeds; i++) {
+        const x = canvas.width - 50 - (mirrorWidth * i) / (numLeds - 1)
+        const y = canvas.height - 50
+        drawLed(x, y, (i + numLeds * 2) / (numLeds * 4))
+      }
+
+      // Borde izquierdo
+      for (let i = 0; i < numLeds; i++) {
+        const x = 50
+        const y = canvas.height - 50 - (mirrorHeight * i) / (numLeds - 1)
+        drawLed(x, y, (i + numLeds * 3) / (numLeds * 4))
+      }
     }
 
-    initThree()
+    // Función de animación
+    let animationId: number
+    const animate = () => {
+      drawMirror()
+      animationId = requestAnimationFrame(animate)
+    }
 
-    // Cleanup
+    // Iniciar animación
+    animate()
+    setIsLoading(false)
+
+    // Limpieza
     return () => {
-      if (animationId) cancelAnimationFrame(animationId)
-      if (renderer) renderer.dispose()
-      if (controls) controls.dispose()
+      cancelAnimationFrame(animationId)
     }
-  }, [width, height, depth, ledColor, widthUnits, heightUnits, depthUnits])
+  }, [width, height, depth, ledColor])
 
   return (
     <div className="relative">
-      <div ref={containerRef} className="w-[400px] h-[400px] bg-black rounded-lg overflow-hidden shadow-2xl">
-        {isLoading && (
+      <div className="w-[400px] h-[400px] bg-black rounded-lg overflow-hidden shadow-2xl">
+        {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
           </div>
+        ) : (
+          <canvas ref={canvasRef} className="w-full h-full" style={{ display: isLoading ? "none" : "block" }} />
         )}
       </div>
       <div className="absolute inset-0 pointer-events-none rounded-lg shadow-[0_0_50px_rgba(255,0,255,0.3)]"></div>
