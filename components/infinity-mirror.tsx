@@ -55,28 +55,37 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
     controls.autoRotateSpeed = 1
 
     // Create frame
-    const frameThickness = 0.2
+    const frameThickness = 0.5
     const frameGeometry = new THREE.BoxGeometry(
       widthUnits + frameThickness * 2,
       heightUnits + frameThickness * 2,
       depthUnits,
     )
     const frameMaterial = new THREE.MeshStandardMaterial({
-      color: 0x111111,
-      roughness: 0.8,
-      metalness: 0.2,
+      transmission: 0.9,  // Amount of light passing through
+      opacity: 0.3,       // Overall transparency
+      reflectivity: 0.7,    // Reflectivity (0 to 1)
+      ior: 1.5,            // Index of Refraction
+      envMapIntensity: 0.9, // Environment map intensity
+      roughness: 0.1,     // Low roughness for a smooth glass look
+      metalness: 1,       // Non-metallic material
+      clearcoat: 1,        // Simulates a thin clear coat layer
+      transparent: true,
     })
     const frame = new THREE.Mesh(frameGeometry, frameMaterial)
     scene.add(frame)
 
     // Create mirror surface (black background)
-    const mirrorGeometry = new THREE.PlaneGeometry(widthUnits, heightUnits)
-    const mirrorMaterial = new THREE.MeshBasicMaterial({
-      color: 0x000000,
-    })
-    const mirror = new THREE.Mesh(mirrorGeometry, mirrorMaterial)
-    mirror.position.z = depthUnits / 2 + 0.001
-    scene.add(mirror)
+    // const mirrorGeometry = new THREE.PlaneGeometry(widthUnits, heightUnits)
+    // const mirrorMaterial = new THREE.MeshStandardMaterial({
+    //   color: 0x000000,
+    //   emissiveIntensity: 2, // How bright it glows
+    //   transparent: true,
+    //   opacity: 0.1,
+    // })
+    // const mirror = new THREE.Mesh(mirrorGeometry, mirrorMaterial)
+    // mirror.position.z = depthUnits / 2 + 0.001
+    // scene.add(mirror)
 
     // Function to get color based on position and ledColor setting
     const getLedColor = (position: number) => {
@@ -246,8 +255,7 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
 
   return (
     <div className="relative">
-      <div ref={containerRef} className="w-[400px] h-[400px] bg-black rounded-lg overflow-hidden shadow-2xl" />
-      <div className="absolute inset-0 pointer-events-none rounded-lg shadow-[0_0_50px_rgba(255,0,255,0.3)]"></div>
+      <div ref={containerRef}></div>
     </div>
   )
 }
