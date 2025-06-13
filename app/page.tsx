@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
-import InfinityMirror from "@/components/infinity-mirror"
-import FallbackMirror from "@/components/fallback-mirror"
+import CanvasMirror from "@/components/canvas-mirror"
 
 export default function Home() {
   const [width, setWidth] = useState(60)
@@ -17,31 +16,11 @@ export default function Home() {
   const [depth, setDepth] = useState(10)
   const [ledColor, setLedColor] = useState("rainbow")
   const [isClient, setIsClient] = useState(false)
-  const [isThreeAvailable, setIsThreeAvailable] = useState(false)
   const { addToCart } = useCart()
 
-  // Fix hydration issues and check for Three.js
+  // Fix hydration issues
   useEffect(() => {
     setIsClient(true)
-
-    // Check if Three.js is available
-    const checkThreeAvailable = () => {
-      if (typeof window !== "undefined" && window.THREE) {
-        setIsThreeAvailable(true)
-      } else {
-        // Check again after a delay
-        setTimeout(checkThreeAvailable, 500)
-      }
-    }
-
-    checkThreeAvailable()
-
-    // Set a timeout to stop checking after 5 seconds
-    const timeout = setTimeout(() => {
-      setIsClient(true) // Ensure client rendering even if Three.js fails
-    }, 5000)
-
-    return () => clearTimeout(timeout)
   }, [])
 
   const calculatePrice = () => {
@@ -76,11 +55,7 @@ export default function Home() {
           <div className="w-full lg:w-1/2 flex justify-center">
             {isClient && (
               <div className="relative">
-                {isThreeAvailable ? (
-                  <InfinityMirror width={width} height={height} depth={depth} ledColor={ledColor} />
-                ) : (
-                  <FallbackMirror width={width} height={height} depth={depth} ledColor={ledColor} />
-                )}
+                <CanvasMirror width={width} height={height} depth={depth} ledColor={ledColor} />
               </div>
             )}
           </div>

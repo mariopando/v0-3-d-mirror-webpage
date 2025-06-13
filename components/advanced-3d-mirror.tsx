@@ -1,112 +1,132 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-// Using global Three.js from CDN
 import { Button } from "@/components/ui/button"
 import { Camera, CuboidIcon as Cube } from "lucide-react"
 
-// Add global declaration for THREE
-declare global {
-  interface Window {
-    THREE: any
-  }
-}
-
 export default function Advanced3DMirror() {
   const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isStreaming, setIsStreaming] = useState(false)
+  const animationRef = useRef<number>()
 
   useEffect(() => {
-    let scene: any
-    let camera: any
-    let renderer: any
-    let videoTexture: any
-    let mesh: any
-    let animationId: number
+    if (!isStreaming || !videoRef.current || !canvasRef.current) return
 
-    const initThree = () => {
-      if (!containerRef.current || !videoRef.current) return
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
 
-      // Create scene
-      scene = new window.THREE.Scene()
+    // Set canvas dimensions
+    canvas.width = 640
+    canvas.height = 480
 
-      // Create camera
-      camera = new window.THREE.PerspectiveCamera(
-        75,
-        containerRef.current.clientWidth / containerRef.current.clientHeight,
-        0.1,
-        1000,
-      )
-      camera.position.z = 1.5
+    // Animation function
+    const animate = () => {
+      if (!videoRef.current || !ctx) return
 
-      // Create renderer
-      renderer = new window.THREE.WebGLRenderer({ alpha: true })
-      renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight)
-      containerRef.current.appendChild(renderer.domElement)
+      // Draw video frame
+      if (videoRef.current.readyState >= 2) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
 
-      // Create video texture
-      videoTexture = new window.THREE.VideoTexture(videoRef.current)
-      videoTexture.minFilter = window.THREE.LinearFilter
-      videoTexture.magFilter = window.THREE.LinearFilter
-
-      // Create geometry
-      const geometry = new window.THREE.SphereGeometry(1, 32, 32)
-
-      // Create material with video texture
-      const material = new window.THREE.MeshBasicMaterial({
-        map: videoTexture,
-        side: window.THREE.BackSide, // Render inside of sphere
-      })
-
-      // Create mesh
-      mesh = new window.THREE.Mesh(geometry, material)
-      scene.add(mesh)
-
-      // Animation loop
-      const animate = () => {
-        animationId = requestAnimationFrame(animate)
-
-        // Update texture if video is playing
-        if (videoRef.current && !videoRef.current.paused) {
-          videoTexture.needsUpdate = true
-        }
-
-        // Rotate the sphere slightly
-        mesh.rotation.y += 0.001
-
-        renderer.render(scene, camera)
+        // Apply mirror effect
+        applyMirrorEffect(ctx, canvas.width, canvas.height)
       }
 
-      animate()
-
-      // Handle resize
-      const handleResize = () => {
-        if (!containerRef.current) return
-
-        camera.aspect = containerRef.current.clientWidth / containerRef.current.clientHeight
-        camera.updateProjectionMatrix()
-        renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight)
-      }
-
-      window.addEventListener("resize", handleResize)
-
-      return () => {
-        window.removeEventListener("resize", handleResize)
-        cancelAnimationFrame(animationId)
-        if (containerRef.current && renderer.domElement) {
-          containerRef.current.removeChild(renderer.domElement)
-        }
-      }
+      // Continue animation
+      animationRef.current = requestAnimationFrame(animate)
     }
 
-    if (isStreaming) {
-      initThree()
+    // Apply mirror effect to the canvas
+    const applyMirrorEffect = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+      // Create a copy of the current frame
+      const imageData = ctx.getImageData(0, 0, width, height)
+      const data = imageData.data
+
+      // Apply a simple mirror effect (you can customize this)
+      // This creates a simple kaleidoscope effect
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width / 2; x++) {
+          const index = (y * width + x) * 4
+          const mirrorIndex = (y * width + (width - x - 1)) * 4
+
+          // Create a mirror effect by copying pixels
+          data[mirrorIndex] = data[index] // R
+          data[mirrorIndex + 1] = data[index + 1] // G
+          data[mirrorIndex + 2] = data[index + 2] // B
+        }
+      }
+
+      // Add a colored border effect
+      const borderSize = 20
+      const time = performance.now() * 0.001
+
+      // Top and bottom borders
+      for (let x = 0; x < width; x++) {
+        for (let y = 0; y < borderSize; y++) {
+          const hue = ((x / width) * 360 + time * 50) % 360
+          const topIndex = (y * width + x) * 4
+          const bottomIndex = ((height - y - 1) * width + x) * 4
+
+          // Set border colors with rainbow effect
+          setHSLColor(data, topIndex, hue, 100, 50)
+          setHSLColor(data, bottomIndex, (hue + 180) % 360, 100, 50)
+        }
+      }
+
+      // Left and right borders
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < borderSize; x++) {
+          const hue = ((y / height) * 360 + time * 50) % 360
+          const leftIndex = (y * width + x) * 4
+          const rightIndex = (y * width + (width - x - 1)) * 4
+
+          // Set border colors with rainbow effect
+          setHSLColor(data, leftIndex, hue, 100, 50)
+          setHSLColor(data, rightIndex, (hue + 180) % 360, 100, 50)
+        }
+      }
+
+      // Put the modified image data back
+      ctx.putImageData(imageData, 0, 0)
     }
 
+    // Helper function to set HSL color in the image data
+    const setHSLColor = (data: Uint8ClampedArray, index: number, h: number, s: number, l: number) => {
+      // Convert HSL to RGB
+      const c = ((1 - Math.abs((2 * l) / 100 - 1)) * s) / 100
+      const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+      const m = l / 100 - c / 2
+
+      let r, g, b
+
+      if (h < 60) {
+        ;[r, g, b] = [c, x, 0]
+      } else if (h < 120) {
+        ;[r, g, b] = [x, c, 0]
+      } else if (h < 180) {
+        ;[r, g, b] = [0, c, x]
+      } else if (h < 240) {
+        ;[r, g, b] = [0, x, c]
+      } else if (h < 300) {
+        ;[r, g, b] = [x, 0, c]
+      } else {
+        ;[r, g, b] = [c, 0, x]
+      }
+
+      data[index] = Math.round((r + m) * 255)
+      data[index + 1] = Math.round((g + m) * 255)
+      data[index + 2] = Math.round((b + m) * 255)
+    }
+
+    // Start animation
+    animate()
+
+    // Cleanup
     return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId)
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
       }
     }
   }, [isStreaming])
@@ -133,6 +153,10 @@ export default function Advanced3DMirror() {
       tracks.forEach((track) => track.stop())
       videoRef.current.srcObject = null
       setIsStreaming(false)
+
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
     }
   }
 
@@ -148,6 +172,12 @@ export default function Advanced3DMirror() {
     <div className="flex flex-col items-center">
       <div ref={containerRef} className="relative w-[640px] h-[480px] rounded-lg border-2 border-white overflow-hidden">
         <video ref={videoRef} className="hidden" width="640" height="480" />
+        <canvas
+          ref={canvasRef}
+          className={`w-full h-full ${isStreaming ? "block" : "hidden"}`}
+          width="640"
+          height="480"
+        />
 
         {!isStreaming && (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
