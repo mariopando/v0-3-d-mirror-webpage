@@ -4,7 +4,7 @@ import "./globals.css"
 import { CartProvider } from "@/context/cart-context"
 
 export const metadata: Metadata = {
-  title: "TallerDigital | Espejos Infinitos LED Personalizados",
+  title: "TallerModerno | Espejos Infinitos LED Personalizados",
   description:
     "Espejos infinitos premium con iluminación LED. Crea tu propio espejo infinito único con dimensiones y colores LED ajustables.",
     generator: 'v0.dev'
