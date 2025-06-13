@@ -51,7 +51,7 @@ export default function Home() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <section className="flex flex-col lg:flex-row gap-4 items-center mb-16">
+        <section className="flex flex-col lg:flex-row gap-8 items-center mb-16">
           <div className="w-full lg:w-1/2 flex justify-center">
             {isClient && (
               <div className="relative">

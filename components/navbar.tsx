@@ -20,7 +20,7 @@ export default function Navbar() {
             href="/"
             className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-transparent bg-clip-text"
           >
-            TallerModerno
+            TallerDigital
           </Link>
         </div>
 
