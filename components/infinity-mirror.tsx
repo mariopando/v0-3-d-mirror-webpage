@@ -1,8 +1,12 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import * as THREE from "three"
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+// Using global Three.js from CDN
+declare global {
+  interface Window {
+    THREE: any
+  }
+}
 
 interface InfinityMirrorProps {
   width: number
@@ -28,15 +32,15 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
     }
 
     // Scene setup
-    const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x000000)
+    const scene = new window.THREE.Scene()
+    scene.background = new window.THREE.Color(0x000000)
 
     // Camera setup
-    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000)
+    const camera = new window.THREE.PerspectiveCamera(60, 1, 0.1, 1000)
     camera.position.z = Math.max(widthUnits, heightUnits) * 1.2
 
     // Renderer setup
-    const renderer = new THREE.WebGLRenderer({
+    const renderer = new window.THREE.WebGLRenderer({
       antialias: true,
       powerPreference: "high-performance",
     })
@@ -45,7 +49,7 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
     containerRef.current.appendChild(renderer.domElement)
 
     // Controls setup
-    const controls = new OrbitControls(camera, renderer.domElement)
+    const controls = new window.THREE.OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.dampingFactor = 0.05
     controls.enableZoom = false
@@ -56,23 +60,23 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
 
     // Create frame
     const frameThickness = 0.5
-    const frameGeometry = new THREE.BoxGeometry(
+    const frameGeometry = new window.THREE.BoxGeometry(
       widthUnits + frameThickness * 2,
       heightUnits + frameThickness * 2,
       depthUnits,
     )
-    const frameMaterial = new THREE.MeshStandardMaterial({
-      transmission: 0.9,  // Amount of light passing through
-      opacity: 0.3,       // Overall transparency
-      reflectivity: 0.7,    // Reflectivity (0 to 1)
-      ior: 1.5,            // Index of Refraction
+    const frameMaterial = new window.THREE.MeshStandardMaterial({
+      transmission: 0.9, // Amount of light passing through
+      opacity: 0.3, // Overall transparency
+      reflectivity: 0.7, // Reflectivity (0 to 1)
+      ior: 1.5, // Index of Refraction
       envMapIntensity: 0.9, // Environment map intensity
-      roughness: 0.1,     // Low roughness for a smooth glass look
-      metalness: 1,       // Non-metallic material
-      clearcoat: 1,        // Simulates a thin clear coat layer
+      roughness: 0.1, // Low roughness for a smooth glass look
+      metalness: 1, // Non-metallic material
+      clearcoat: 1, // Simulates a thin clear coat layer
       transparent: true,
     })
-    const frame = new THREE.Mesh(frameGeometry, frameMaterial)
+    const frame = new window.THREE.Mesh(frameGeometry, frameMaterial)
     scene.add(frame)
 
     // Create mirror surface (black background)
@@ -92,17 +96,17 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
       if (ledColor === "rainbow") {
         // Create rainbow gradient
         const hue = (position + 0.5) / 2
-        return new THREE.Color().setHSL(hue, 1, 0.5)
+        return new window.THREE.Color().setHSL(hue, 1, 0.5)
       } else if (ledColor === "white") {
-        return new THREE.Color(0xffffff)
+        return new window.THREE.Color(0xffffff)
       } else if (ledColor === "blue") {
-        return new THREE.Color(0x0088ff)
+        return new window.THREE.Color(0x0088ff)
       } else if (ledColor === "green") {
-        return new THREE.Color(0x00ff88)
+        return new window.THREE.Color(0x00ff88)
       } else if (ledColor === "purple") {
-        return new THREE.Color(0x8800ff)
+        return new window.THREE.Color(0x8800ff)
       } else {
-        return new THREE.Color(0xff0088) // Pink default
+        return new window.THREE.Color(0xff0088) // Pink default
       }
     }
 
@@ -110,7 +114,7 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
     // to create the LED effect, which is much more efficient for WebGL
 
     const ledSize = 0.05
-    const leds: THREE.Mesh[] = []
+    const leds: window.THREE.Mesh[] = []
     const numLeds = 20
 
     // Create LED strips around the perimeter
@@ -150,11 +154,11 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
 
     // Function to create an LED with emissive material instead of a point light
     const createLed = (x: number, y: number, position: number) => {
-      const ledGeometry = new THREE.BoxGeometry(ledSize, ledSize, 0.05)
+      const ledGeometry = new window.THREE.BoxGeometry(ledSize, ledSize, 0.05)
       const color = getLedColor(position)
 
       // Use emissive material to create self-illuminating effect without actual lights
-      const ledMaterial = new THREE.MeshStandardMaterial({
+      const ledMaterial = new window.THREE.MeshStandardMaterial({
         color: 0x000000, // Base color is black
         emissive: color, // The color that glows
         emissiveIntensity: 2, // How bright it glows
@@ -162,7 +166,7 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
         opacity: 1.0,
       })
 
-      const led = new THREE.Mesh(ledGeometry, ledMaterial)
+      const led = new window.THREE.Mesh(ledGeometry, ledMaterial)
       led.position.set(x, y, depthUnits / 2 + 0.02)
       scene.add(led)
       leds.push(led)
@@ -186,11 +190,11 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
         const scaledX = x * scale
         const scaledY = y * scale
 
-        const pointGeometry = new THREE.BoxGeometry(ledSize * 0.8, ledSize * 0.8, 0.02)
+        const pointGeometry = new window.THREE.BoxGeometry(ledSize * 0.8, ledSize * 0.8, 0.02)
         const color = getLedColor(position)
 
         // Use emissive material for the receding points too
-        const pointMaterial = new THREE.MeshStandardMaterial({
+        const pointMaterial = new window.THREE.MeshStandardMaterial({
           color: 0x000000,
           emissive: color,
           emissiveIntensity: 1.5 * (1 - (i / numPoints) * 0.7),
@@ -198,7 +202,7 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
           opacity: 1 - (i / numPoints) * 0.7,
         })
 
-        const point = new THREE.Mesh(pointGeometry, pointMaterial)
+        const point = new window.THREE.Mesh(pointGeometry, pointMaterial)
         point.position.set(scaledX, scaledY, z)
         scene.add(point)
         leds.push(point)
@@ -209,11 +213,11 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
     createPerimeterLeds()
 
     // OPTIMIZATION: Use just one ambient light for the entire scene
-    const ambientLight = new THREE.AmbientLight(0x404040)
+    const ambientLight = new window.THREE.AmbientLight(0x404040)
     scene.add(ambientLight)
 
     // OPTIMIZATION: Use just one directional light for the frame
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5)
+    const directionalLight = new window.THREE.DirectionalLight(0xffffff, 0.5)
     directionalLight.position.set(1, 1, 1)
     scene.add(directionalLight)
 
@@ -227,7 +231,7 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
       // Animate LEDs with a wave pattern
       const time = performance.now() * 0.001
       leds.forEach((led, index) => {
-        const material = led.material as THREE.MeshStandardMaterial
+        const material = led.material as window.THREE.MeshStandardMaterial
         if (material.emissiveIntensity !== undefined) {
           // Modulate the emissive intensity to create the pulsing effect
           const baseIntensity = index < numLeds * 4 ? 2 : 1.5 * (1 - (Math.floor(index / (numLeds * 4)) / 8) * 0.7)

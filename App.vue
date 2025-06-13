@@ -5,8 +5,7 @@
 </template>
 
 <script>
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+// Using global Three.js from CDN
 
 export default {
   name: 'App',
@@ -37,11 +36,11 @@ export default {
   methods: {
     initThree() {
       // Create scene
-      this.scene = new THREE.Scene();
-      this.scene.background = new THREE.Color(0x000000);
+      this.scene = new window.THREE.Scene();
+      this.scene.background = new window.THREE.Color(0x000000);
       
       // Create camera
-      this.camera = new THREE.PerspectiveCamera(
+      this.camera = new window.THREE.PerspectiveCamera(
         75, 
         window.innerWidth / window.innerHeight, 
         0.1, 
@@ -50,13 +49,13 @@ export default {
       this.camera.position.z = 5;
       
       // Create renderer
-      this.renderer = new THREE.WebGLRenderer({ antialias: true });
+      this.renderer = new window.THREE.WebGLRenderer({ antialias: true });
       this.renderer.setSize(window.innerWidth, window.innerHeight);
       this.renderer.setPixelRatio(window.devicePixelRatio);
       this.$refs.sceneContainer.appendChild(this.renderer.domElement);
       
       // Add controls
-      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+      this.controls = new window.THREE.OrbitControls(this.camera, this.renderer.domElement);
       this.controls.enableDamping = true;
       this.controls.dampingFactor = 0.05;
       this.controls.minDistance = 3;
@@ -64,16 +63,16 @@ export default {
     },
     createMirrorEffect() {
       // Create the outer box
-      const boxGeometry = new THREE.BoxGeometry(4, 4, 4);
+      const boxGeometry = new window.THREE.BoxGeometry(4, 4, 4);
       const boxMaterials = [
-        new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }),
-        new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }),
-        new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }),
-        new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }),
-        new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }),
-        new THREE.MeshBasicMaterial({ color: 0x000000 })
+        new window.THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }),
+        new window.THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }),
+        new window.THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }),
+        new window.THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }),
+        new window.THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }),
+        new window.THREE.MeshBasicMaterial({ color: 0x000000 })
       ];
-      const box = new THREE.Mesh(boxGeometry, boxMaterials);
+      const box = new window.THREE.Mesh(boxGeometry, boxMaterials);
       box.position.set(0, 0, 0);
       this.scene.add(box);
       
@@ -82,13 +81,13 @@ export default {
         for (let x = -this.gridSize / 2; x < this.gridSize / 2; x += 1) {
           for (let y = -this.gridSize / 2; y < this.gridSize / 2; y += 1) {
             // Create light point
-            const pointGeometry = new THREE.SphereGeometry(0.05, 8, 8);
-            const pointMaterial = new THREE.MeshBasicMaterial({ 
+            const pointGeometry = new window.THREE.SphereGeometry(0.05, 8, 8);
+            const pointMaterial = new window.THREE.MeshBasicMaterial({ 
               color: 0xffffff,
               transparent: true,
               opacity: 1 + (z / this.mirrorDepth)
             });
-            const point = new THREE.Mesh(pointGeometry, pointMaterial);
+            const point = new window.THREE.Mesh(pointGeometry, pointMaterial);
             point.position.set(x * 0.4, y * 0.4, z);
             this.scene.add(point);
             this.lights.push(point);
@@ -97,11 +96,11 @@ export default {
       }
       
       // Add ambient light
-      const ambientLight = new THREE.AmbientLight(0x404040);
+      const ambientLight = new window.THREE.AmbientLight(0x404040);
       this.scene.add(ambientLight);
       
       // Add directional light
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      const directionalLight = new window.THREE.DirectionalLight(0xffffff, 1);
       directionalLight.position.set(1, 1, 1);
       this.scene.add(directionalLight);
     },
