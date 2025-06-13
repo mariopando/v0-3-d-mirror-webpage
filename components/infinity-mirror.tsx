@@ -28,9 +28,9 @@ export default function InfinityMirror({ width, height, depth, ledColor }: Infin
     const initThree = async () => {
       if (!containerRef.current) return
 
-      // Clear previous content
-      while (containerRef.current.firstChild) {
-        containerRef.current.removeChild(containerRef.current.firstChild)
+      // Clear previous content safely
+      if (containerRef.current) {
+        containerRef.current.innerHTML = ""
       }
 
       // Scene setup
