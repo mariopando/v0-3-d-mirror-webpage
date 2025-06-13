@@ -10,169 +10,332 @@ interface InfinityMirrorProps {
 }
 
 export default function InfinityMirror({ width, height, depth, ledColor }: InfinityMirrorProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  // Simplificamos el componente para evitar problemas con Three.js
-  // Creamos una versión simplificada usando Canvas 2D
+  // Determinar la imagen a mostrar según el color LED seleccionado
+  const getImageSrc = () => {
+    switch (ledColor) {
+      case "rainbow":
+        return "/mirror-rainbow.jpg"
+      case "white":
+        return "/mirror-white.jpg"
+      case "blue":
+        return "/mirror-blue.jpg"
+      case "green":
+        return "/mirror-green.jpg"
+      case "purple":
+        return "/mirror-purple.jpg"
+      case "pink":
+        return "/mirror-pink.jpg"
+      default:
+        return "/mirror-rainbow.jpg"
+    }
+  }
+
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    // Simular tiempo de carga
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    // Establecer dimensiones del canvas
-    canvas.width = 400
-    canvas.height = 400
-
-    // Función para obtener color basado en la posición y configuración de LED
-    const getLedColor = (position: number): string => {
-      if (ledColor === "rainbow") {
-        // Crear gradiente arcoíris
-        const hue = (position * 360) % 360
-        return `hsl(${hue}, 100%, 50%)`
-      } else if (ledColor === "white") {
-        return "#ffffff"
-      } else if (ledColor === "blue") {
-        return "#0088ff"
-      } else if (ledColor === "green") {
-        return "#00ff88"
-      } else if (ledColor === "purple") {
-        return "#8800ff"
-      } else {
-        return "#ff0088" // Rosa por defecto
-      }
-    }
-
-    // Función para dibujar el espejo
-    const drawMirror = () => {
-      if (!ctx) return
-
-      // Limpiar canvas
-      ctx.fillStyle = "#000000"
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-      // Dibujar marco
-      ctx.strokeStyle = "#333333"
-      ctx.lineWidth = 10
-      ctx.strokeRect(50, 50, canvas.width - 100, canvas.height - 100)
-
-      // Calcular proporciones
-      const mirrorWidth = canvas.width - 100
-      const mirrorHeight = canvas.height - 100
-      const centerX = canvas.width / 2
-      const centerY = canvas.height / 2
-
-      // Dibujar efecto de profundidad
-      const maxDepth = 8
-      for (let d = maxDepth; d > 0; d--) {
-        const scale = 1 - d * 0.1
-        const rectWidth = mirrorWidth * scale
-        const rectHeight = mirrorHeight * scale
-        const x = centerX - rectWidth / 2
-        const y = centerY - rectHeight / 2
-
-        // Dibujar rectángulo de fondo para cada nivel
-        ctx.fillStyle = `rgba(0, 0, 0, ${0.7 + d * 0.03})`
-        ctx.fillRect(x, y, rectWidth, rectHeight)
-      }
-
-      // Dibujar LEDs
-      const numLeds = 20
-      const ledSize = 4
-
-      // Función para dibujar un LED y su reflejo
-      const drawLed = (x: number, y: number, position: number) => {
-        const color = getLedColor(position)
-
-        // LED principal
-        ctx.fillStyle = color
-        ctx.beginPath()
-        ctx.arc(x, y, ledSize, 0, Math.PI * 2)
-        ctx.fill()
-
-        // Brillo alrededor del LED
-        const gradient = ctx.createRadialGradient(x, y, ledSize, x, y, ledSize * 3)
-        gradient.addColorStop(0, color)
-        gradient.addColorStop(1, "rgba(0,0,0,0)")
-        ctx.fillStyle = gradient
-        ctx.beginPath()
-        ctx.arc(x, y, ledSize * 3, 0, Math.PI * 2)
-        ctx.fill()
-
-        // Reflejos de profundidad
-        for (let d = 1; d <= 5; d++) {
-          const scale = 1 - d * 0.15
-          const reflectX = centerX - (centerX - x) * scale
-          const reflectY = centerY - (centerY - y) * scale
-          const opacity = 1 - d * 0.18
-
-          ctx.fillStyle = color
-          ctx.globalAlpha = opacity
-          ctx.beginPath()
-          ctx.arc(reflectX, reflectY, ledSize * (1 - d * 0.1), 0, Math.PI * 2)
-          ctx.fill()
-          ctx.globalAlpha = 1
-        }
-      }
-
-      // Dibujar LEDs en los bordes
-      // Borde superior
-      for (let i = 0; i < numLeds; i++) {
-        const x = 50 + (mirrorWidth * i) / (numLeds - 1)
-        const y = 50
-        drawLed(x, y, i / numLeds)
-      }
-
-      // Borde derecho
-      for (let i = 0; i < numLeds; i++) {
-        const x = canvas.width - 50
-        const y = 50 + (mirrorHeight * i) / (numLeds - 1)
-        drawLed(x, y, (i + numLeds) / (numLeds * 4))
-      }
-
-      // Borde inferior
-      for (let i = 0; i < numLeds; i++) {
-        const x = canvas.width - 50 - (mirrorWidth * i) / (numLeds - 1)
-        const y = canvas.height - 50
-        drawLed(x, y, (i + numLeds * 2) / (numLeds * 4))
-      }
-
-      // Borde izquierdo
-      for (let i = 0; i < numLeds; i++) {
-        const x = 50
-        const y = canvas.height - 50 - (mirrorHeight * i) / (numLeds - 1)
-        drawLed(x, y, (i + numLeds * 3) / (numLeds * 4))
-      }
-    }
-
-    // Función de animación
-    let animationId: number
-    const animate = () => {
-      drawMirror()
-      animationId = requestAnimationFrame(animate)
-    }
-
-    // Iniciar animación
-    animate()
-    setIsLoading(false)
-
-    // Limpieza
-    return () => {
-      cancelAnimationFrame(animationId)
-    }
-  }, [width, height, depth, ledColor])
+    return () => clearTimeout(timer)
+  }, [ledColor])
 
   return (
     <div className="relative">
-      <div className="w-[400px] h-[400px] bg-black rounded-lg overflow-hidden shadow-2xl">
+      <div
+        ref={containerRef}
+        className="w-[400px] h-[400px] bg-black rounded-lg overflow-hidden shadow-2xl flex items-center justify-center"
+      >
         {isLoading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+            <p className="text-gray-400">Cargando visualización...</p>
           </div>
         ) : (
-          <canvas ref={canvasRef} className="w-full h-full" style={{ display: isLoading ? "none" : "block" }} />
+          <div className="relative w-full h-full">
+            {/* Usamos una imagen estática como fallback */}
+            <div
+              className="w-full h-full bg-center bg-cover"
+              style={{
+                backgroundImage: `url('/placeholder.svg?height=400&width=400')`,
+                backgroundSize: "cover",
+              }}
+            >
+              {/* Simulación visual del espejo infinito */}
+              <div className="absolute inset-[40px] bg-black border-2 border-gray-800 flex items-center justify-center">
+                <div
+                  className={`
+                  w-4/5 h-4/5 rounded-sm 
+                  ${
+                    ledColor === "rainbow"
+                      ? "bg-gradient-to-r from-red-500 via-green-500 to-blue-500"
+                      : ledColor === "white"
+                        ? "bg-white"
+                        : ledColor === "blue"
+                          ? "bg-blue-500"
+                          : ledColor === "green"
+                            ? "bg-green-500"
+                            : ledColor === "purple"
+                              ? "bg-purple-500"
+                              : "bg-pink-500"
+                  } opacity-20
+                `}
+                >
+                  {/* Efecto de profundidad */}
+                  <div className="w-4/5 h-4/5 m-auto bg-black opacity-80"></div>
+                </div>
+
+                {/* LEDs alrededor del borde */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* LEDs superiores */}
+                  <div className="absolute top-0 left-0 right-0 h-1 flex">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div
+                        key={`top-${i}`}
+                        className={`
+                          w-2 h-2 rounded-full mx-auto 
+                          ${
+                            ledColor === "rainbow"
+                              ? [
+                                  "bg-red-500",
+                                  "bg-orange-500",
+                                  "bg-yellow-500",
+                                  "bg-green-500",
+                                  "bg-blue-500",
+                                  "bg-indigo-500",
+                                  "bg-purple-500",
+                                  "bg-pink-500",
+                                  "bg-red-500",
+                                  "bg-orange-500",
+                                ][i]
+                              : ledColor === "white"
+                                ? "bg-white"
+                                : ledColor === "blue"
+                                  ? "bg-blue-500"
+                                  : ledColor === "green"
+                                    ? "bg-green-500"
+                                    : ledColor === "purple"
+                                      ? "bg-purple-500"
+                                      : "bg-pink-500"
+                          }
+                          shadow-glow
+                        `}
+                        style={{
+                          boxShadow: `0 0 10px 2px ${
+                            ledColor === "rainbow"
+                              ? [
+                                  "#f87171",
+                                  "#fb923c",
+                                  "#facc15",
+                                  "#4ade80",
+                                  "#60a5fa",
+                                  "#818cf8",
+                                  "#a855f7",
+                                  "#ec4899",
+                                  "#f87171",
+                                  "#fb923c",
+                                ][i]
+                              : ledColor === "white"
+                                ? "#ffffff"
+                                : ledColor === "blue"
+                                  ? "#60a5fa"
+                                  : ledColor === "green"
+                                    ? "#4ade80"
+                                    : ledColor === "purple"
+                                      ? "#a855f7"
+                                      : "#ec4899"
+                          }`,
+                        }}
+                      ></div>
+                    ))}
+                  </div>
+
+                  {/* LEDs inferiores */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1 flex">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div
+                        key={`bottom-${i}`}
+                        className={`
+                          w-2 h-2 rounded-full mx-auto 
+                          ${
+                            ledColor === "rainbow"
+                              ? [
+                                  "bg-red-500",
+                                  "bg-orange-500",
+                                  "bg-yellow-500",
+                                  "bg-green-500",
+                                  "bg-blue-500",
+                                  "bg-indigo-500",
+                                  "bg-purple-500",
+                                  "bg-pink-500",
+                                  "bg-red-500",
+                                  "bg-orange-500",
+                                ][i]
+                              : ledColor === "white"
+                                ? "bg-white"
+                                : ledColor === "blue"
+                                  ? "bg-blue-500"
+                                  : ledColor === "green"
+                                    ? "bg-green-500"
+                                    : ledColor === "purple"
+                                      ? "bg-purple-500"
+                                      : "bg-pink-500"
+                          }
+                          shadow-glow
+                        `}
+                        style={{
+                          boxShadow: `0 0 10px 2px ${
+                            ledColor === "rainbow"
+                              ? [
+                                  "#f87171",
+                                  "#fb923c",
+                                  "#facc15",
+                                  "#4ade80",
+                                  "#60a5fa",
+                                  "#818cf8",
+                                  "#a855f7",
+                                  "#ec4899",
+                                  "#f87171",
+                                  "#fb923c",
+                                ][i]
+                              : ledColor === "white"
+                                ? "#ffffff"
+                                : ledColor === "blue"
+                                  ? "#60a5fa"
+                                  : ledColor === "green"
+                                    ? "#4ade80"
+                                    : ledColor === "purple"
+                                      ? "#a855f7"
+                                      : "#ec4899"
+                          }`,
+                        }}
+                      ></div>
+                    ))}
+                  </div>
+
+                  {/* LEDs izquierdos */}
+                  <div className="absolute top-0 bottom-0 left-0 w-1 flex flex-col">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div
+                        key={`left-${i}`}
+                        className={`
+                          w-2 h-2 rounded-full my-auto 
+                          ${
+                            ledColor === "rainbow"
+                              ? [
+                                  "bg-red-500",
+                                  "bg-orange-500",
+                                  "bg-yellow-500",
+                                  "bg-green-500",
+                                  "bg-blue-500",
+                                  "bg-indigo-500",
+                                  "bg-purple-500",
+                                  "bg-pink-500",
+                                ][i]
+                              : ledColor === "white"
+                                ? "bg-white"
+                                : ledColor === "blue"
+                                  ? "bg-blue-500"
+                                  : ledColor === "green"
+                                    ? "bg-green-500"
+                                    : ledColor === "purple"
+                                      ? "bg-purple-500"
+                                      : "bg-pink-500"
+                          }
+                          shadow-glow
+                        `}
+                        style={{
+                          boxShadow: `0 0 10px 2px ${
+                            ledColor === "rainbow"
+                              ? [
+                                  "#f87171",
+                                  "#fb923c",
+                                  "#facc15",
+                                  "#4ade80",
+                                  "#60a5fa",
+                                  "#818cf8",
+                                  "#a855f7",
+                                  "#ec4899",
+                                ][i]
+                              : ledColor === "white"
+                                ? "#ffffff"
+                                : ledColor === "blue"
+                                  ? "#60a5fa"
+                                  : ledColor === "green"
+                                    ? "#4ade80"
+                                    : ledColor === "purple"
+                                      ? "#a855f7"
+                                      : "#ec4899"
+                          }`,
+                        }}
+                      ></div>
+                    ))}
+                  </div>
+
+                  {/* LEDs derechos */}
+                  <div className="absolute top-0 bottom-0 right-0 w-1 flex flex-col">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div
+                        key={`right-${i}`}
+                        className={`
+                          w-2 h-2 rounded-full my-auto 
+                          ${
+                            ledColor === "rainbow"
+                              ? [
+                                  "bg-red-500",
+                                  "bg-orange-500",
+                                  "bg-yellow-500",
+                                  "bg-green-500",
+                                  "bg-blue-500",
+                                  "bg-indigo-500",
+                                  "bg-purple-500",
+                                  "bg-pink-500",
+                                ][i]
+                              : ledColor === "white"
+                                ? "bg-white"
+                                : ledColor === "blue"
+                                  ? "bg-blue-500"
+                                  : ledColor === "green"
+                                    ? "bg-green-500"
+                                    : ledColor === "purple"
+                                      ? "bg-purple-500"
+                                      : "bg-pink-500"
+                          }
+                          shadow-glow
+                        `}
+                        style={{
+                          boxShadow: `0 0 10px 2px ${
+                            ledColor === "rainbow"
+                              ? [
+                                  "#f87171",
+                                  "#fb923c",
+                                  "#facc15",
+                                  "#4ade80",
+                                  "#60a5fa",
+                                  "#818cf8",
+                                  "#a855f7",
+                                  "#ec4899",
+                                ][i]
+                              : ledColor === "white"
+                                ? "#ffffff"
+                                : ledColor === "blue"
+                                  ? "#60a5fa"
+                                  : ledColor === "green"
+                                    ? "#4ade80"
+                                    : ledColor === "purple"
+                                      ? "#a855f7"
+                                      : "#ec4899"
+                          }`,
+                        }}
+                      ></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
       <div className="absolute inset-0 pointer-events-none rounded-lg shadow-[0_0_50px_rgba(255,0,255,0.3)]"></div>
