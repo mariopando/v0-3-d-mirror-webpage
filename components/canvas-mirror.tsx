@@ -56,8 +56,8 @@ export default function CanvasMirror({ width, height, depth, ledColor }: CanvasM
       ctx.fillStyle = "#222"
       ctx.fillRect(centerX - mirrorWidth / 2 - 10, centerY - mirrorHeight / 2 - 10, mirrorWidth + 20, mirrorHeight + 20)
 
-      // Inner frame
-      ctx.fillStyle = "#000"
+      // Inner frame - reflective surface
+      ctx.fillStyle = "#111"
       ctx.fillRect(centerX - mirrorWidth / 2, centerY - mirrorHeight / 2, mirrorWidth, mirrorHeight)
     }
 
@@ -102,6 +102,17 @@ export default function CanvasMirror({ width, height, depth, ledColor }: CanvasM
         ctx.fillStyle = color
         ctx.globalAlpha = pulse
         ctx.fill()
+
+        // Add glow effect
+        const gradient = ctx.createRadialGradient(x, y, ledSize, x, y, ledSize * 4)
+        gradient.addColorStop(0, color)
+        gradient.addColorStop(1, "rgba(0,0,0,0)")
+        ctx.fillStyle = gradient
+        ctx.globalAlpha = pulse * 0.3
+        ctx.beginPath()
+        ctx.arc(x, y, ledSize * 4, 0, Math.PI * 2)
+        ctx.fill()
+
         ctx.globalAlpha = 1.0
       }
     }
@@ -118,7 +129,7 @@ export default function CanvasMirror({ width, height, depth, ledColor }: CanvasM
         const opacity = Math.max(0.1, 1 - (i / maxDepth) * 0.9)
 
         // Draw the receding rectangle
-        ctx.fillStyle = "#000"
+        ctx.fillStyle = "#111"
         ctx.globalAlpha = opacity
         ctx.fillRect(centerX - w / 2, centerY - h / 2, w, h)
         ctx.globalAlpha = 1.0
