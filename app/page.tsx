@@ -9,7 +9,6 @@ import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
 import InfinityMirror from "@/components/infinity-mirror"
-import { Slider } from "@/components/ui/slider"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 export default function Home() {
@@ -18,7 +17,6 @@ export default function Home() {
   const [depth, setDepth] = useState(10)
   const [ledColor, setLedColor] = useState("rainbow")
   const [isClient, setIsClient] = useState(false)
-  const [isThreeAvailable, setIsThreeAvailable] = useState(false)
   const { addToCart } = useCart()
 
   // New state variables
@@ -40,25 +38,6 @@ export default function Home() {
   // Fix hydration issues
   useEffect(() => {
     setIsClient(true)
-
-    // Check if Three.js is available
-    const checkThreeAvailable = () => {
-      if (typeof window !== "undefined" && window.THREE) {
-        setIsThreeAvailable(true)
-      } else {
-        // Check again after a delay
-        setTimeout(checkThreeAvailable, 500)
-      }
-    }
-
-    checkThreeAvailable()
-
-    // Set a timeout to stop checking after 5 seconds
-    const timeout = setTimeout(() => {
-      setIsClient(true) // Ensure client rendering even if Three.js fails
-    }, 5000)
-
-    return () => clearTimeout(timeout)
   }, [])
 
   const calculatePrice = () => {
@@ -194,30 +173,26 @@ export default function Home() {
             </div>
           </div>
         </section>
-      <section className="flex flex-col lg:flex-row gap-4 items-center mb-16">
+        <section className="flex flex-col lg:flex-row gap-4 items-center mb-16">
           <div className="w-full lg:w-1/2 flex justify-center">
-          <label className="block text-sm font-medium mb-2">Color de fondo</label>
-              <RadioGroup
-                className="flex gap-4"
-                value={String(bgGrayLevel)}
-                onValueChange={val => setBgGrayLevel(Number(val))}
-              >
-                {[1, 2, 3, 4, 5].map(level => (
-                  <RadioGroupItem
-                    key={level}
-                    value={String(level)}
-                    className="flex flex-col items-center"
-                  >
-                    <span
-                      className="w-8 h-8 rounded border block mb-1"
-                      style={{
-                        background: `#${getGrayHex(level).toString(16).padStart(6, "0")}`
-                      }}
-                    />
-                    <span className="text-xs">{level}</span>
-                  </RadioGroupItem>
-                ))}
-              </RadioGroup>
+            <label className="block text-sm font-medium mb-2">Color de fondo</label>
+            <RadioGroup
+              className="flex gap-4"
+              value={String(bgGrayLevel)}
+              onValueChange={(val) => setBgGrayLevel(Number(val))}
+            >
+              {[1, 2, 3, 4, 5].map((level) => (
+                <RadioGroupItem key={level} value={String(level)} className="flex flex-col items-center">
+                  <span
+                    className="w-8 h-8 rounded border block mb-1"
+                    style={{
+                      background: `#${getGrayHex(level).toString(16).padStart(6, "0")}`,
+                    }}
+                  />
+                  <span className="text-xs">{level}</span>
+                </RadioGroupItem>
+              ))}
+            </RadioGroup>
           </div>
         </section>
         <section className="mb-16">
