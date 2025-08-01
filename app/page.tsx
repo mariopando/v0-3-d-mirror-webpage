@@ -9,7 +9,8 @@ import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
 import InfinityMirror from "@/components/infinity-mirror"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { RadioGroup } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 
 export default function Home() {
   const [width, setWidth] = useState(100)
@@ -72,40 +73,42 @@ export default function Home() {
   const bgGray = getGrayHex(bgGrayLevel)
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <section className="flex flex-col lg:flex-row gap-4 items-center mb-16">
+        <section className="flex flex-col lg:flex-row gap-8 items-center mb-16">
           <div className="w-full lg:w-1/2 flex justify-center">
             {isClient && (
-              <InfinityMirror
-                width={width}
-                height={height}
-                depth={depth}
-                ledColor={ledColor}
-                frameColor={frameColor}
-                frameWidth={frameWidth}
-                frameDepth={frameDepth}
-                surfaceMirrorTransparency={surfaceMirrorTransparency}
-                fov={fov}
-                aspect={aspect}
-                near={near}
-                far={far}
-                backgroundColor={bgGray}
-              />
+              <div className="mirror-container p-4">
+                <InfinityMirror
+                  width={width}
+                  height={height}
+                  depth={depth}
+                  ledColor={ledColor}
+                  frameColor={frameColor}
+                  frameWidth={frameWidth}
+                  frameDepth={frameDepth}
+                  surfaceMirrorTransparency={surfaceMirrorTransparency}
+                  fov={fov}
+                  aspect={aspect}
+                  near={near}
+                  far={far}
+                  backgroundColor={bgGray}
+                />
+              </div>
             )}
           </div>
           <div className="w-full lg:w-1/2">
-            <h1 className="text-4xl font-bold mb-4">Espejo Infinito Personalizado</h1>
-            <p className="text-gray-300 mb-6">
+            <h1 className="text-4xl font-bold mb-4 gradient-text">Espejo Infinito Personalizado</h1>
+            <p className="text-muted-foreground mb-6 leading-relaxed">
               Experimenta la fascinante profundidad de nuestros espejos infinitos premium. Cada espejo está fabricado
               artesanalmente con precisión y cuenta con iluminación LED de alta calidad que crea un impresionante efecto
               de túnel infinito. Personaliza las dimensiones y el color de los LED para crear la pieza perfecta para tu
               espacio.
             </p>
 
-            <div className="bg-gray-900 rounded-lg p-6 mb-6">
+            <div className="bg-card border border-border rounded-lg p-6 mb-6 shadow-sm">
               <ProductControls
                 width={width}
                 setWidth={setWidth}
@@ -134,10 +137,10 @@ export default function Home() {
               />
 
               <div className="mt-6 flex flex-col sm:flex-row gap-4">
-                <div className="text-2xl font-bold">{formatCurrency(calculatePrice())}</div>
+                <div className="text-2xl font-bold text-primary">{formatCurrency(calculatePrice())}</div>
                 <Button
                   onClick={handleAddToCart}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                 >
                   <ShoppingCart className="mr-2 h-5 w-5" />
                   Agregar al Carrito
@@ -145,9 +148,9 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h3 className="text-xl font-semibold mb-2">Especificaciones del Producto</h3>
-              <ul className="list-disc list-inside space-y-1 text-gray-300">
+            <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+              <h3 className="text-xl font-semibold mb-4 text-foreground">Especificaciones del Producto</h3>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 <li>
                   Dimensiones: {width}cm × {height}cm × {depth}cm
                 </li>
@@ -173,47 +176,63 @@ export default function Home() {
             </div>
           </div>
         </section>
+
         <section className="flex flex-col lg:flex-row gap-4 items-center mb-16">
-          <div className="w-full lg:w-1/2 flex justify-center">
-            <label className="block text-sm font-medium mb-2">Color de fondo</label>
+          <div className="w-full lg:w-1/2 flex flex-col items-center">
+            <Label className="block text-sm font-medium mb-4 text-foreground">Color de fondo del visor 3D</Label>
             <RadioGroup
               className="flex gap-4"
               value={String(bgGrayLevel)}
               onValueChange={(val) => setBgGrayLevel(Number(val))}
             >
               {[1, 2, 3, 4, 5].map((level) => (
-                <RadioGroupItem key={level} value={String(level)} className="flex flex-col items-center">
-                  <span
-                    className="w-8 h-8 rounded border block mb-1"
-                    style={{
-                      background: `#${getGrayHex(level).toString(16).padStart(6, "0")}`,
-                    }}
+                <div key={level} className="flex flex-col items-center">
+                  <input
+                    type="radio"
+                    id={`bg-${level}`}
+                    name="background"
+                    value={String(level)}
+                    checked={bgGrayLevel === level}
+                    onChange={() => setBgGrayLevel(level)}
+                    className="sr-only"
                   />
-                  <span className="text-xs">{level}</span>
-                </RadioGroupItem>
+                  <label htmlFor={`bg-${level}`} className="cursor-pointer flex flex-col items-center">
+                    <span
+                      className="w-8 h-8 rounded border-2 border-border block mb-1 hover:scale-110 transition-transform"
+                      style={{
+                        background: `#${getGrayHex(level).toString(16).padStart(6, "0")}`,
+                        borderColor: bgGrayLevel === level ? "hsl(var(--primary))" : "hsl(var(--border))",
+                      }}
+                    />
+                    <span className="text-xs text-muted-foreground">{level}</span>
+                  </label>
+                </div>
               ))}
             </RadioGroup>
           </div>
         </section>
+
         <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 text-center">¿Por qué elegir nuestros Espejos Infinitos?</h2>
+          <h2 className="text-3xl font-bold mb-8 text-center text-foreground">
+            ¿Por qué elegir nuestros Espejos Infinitos?
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-gray-900 p-6 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">Calidad Premium</h3>
-              <p className="text-gray-300">
+            <div className="bg-card border border-border p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">Calidad Premium</h3>
+              <p className="text-muted-foreground leading-relaxed">
                 Fabricados artesanalmente con materiales premium e ingeniería de precisión para un efecto infinito
                 impecable.
               </p>
             </div>
-            <div className="bg-gray-900 p-6 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">Personalizable</h3>
-              <p className="text-gray-300">
+            <div className="bg-card border border-border p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">Personalizable</h3>
+              <p className="text-muted-foreground leading-relaxed">
                 Elige las dimensiones, colores LED y estilo del marco para crear tu espejo perfecto.
               </p>
             </div>
-            <div className="bg-gray-900 p-6 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">Fácil Instalación</h3>
-              <p className="text-gray-300">
+            <div className="bg-card border border-border p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <h3 className="text-xl font-semibold mb-3 text-foreground">Fácil Instalación</h3>
+              <p className="text-muted-foreground leading-relaxed">
                 Sistema de montaje en pared simple y conexión plug-and-play. No se necesita cableado especial.
               </p>
             </div>
