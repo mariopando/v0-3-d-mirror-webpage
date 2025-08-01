@@ -1,37 +1,39 @@
 import type React from "react"
 import type { Metadata } from "next"
+import { Inter } from "next/font/google"
 import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+import Navbar from "@/components/navbar"
+import Footer from "@/components/footer"
 import { CartProvider } from "@/context/cart-context"
-import Script from "next/script"
+import { Toaster } from "@/components/ui/toaster"
+
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "TallerModerno | Espejos Infinitos LED Personalizados",
-  description:
-    "Espejos infinitos premium con iluminación LED. Crea tu propio espejo infinito único con dimensiones y colores LED ajustables.",
-  generator: "v0.dev",
+  title: "TallerModerno - Espejos LED Personalizados",
+  description: "Descubre nuestra colección de espejos LED personalizados con tecnología 3D avanzada",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <html lang="es" className="dark">
-      <head>
-        {/* Add Three.js from CDN */}
-        <Script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" strategy="beforeInteractive" />
-        <Script
-          src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"
-          strategy="beforeInteractive"
-        />
-        <Script
-          src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/objects/Reflector.js"
-          strategy="beforeInteractive"
-        />
-      </head>
-      <body className="min-h-screen bg-black text-white">
-        <CartProvider>{children}</CartProvider>
+    <html lang="es" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <CartProvider>
+            <div className="min-h-screen bg-background text-foreground">
+              <Navbar />
+              <main>{children}</main>
+              <Footer />
+            </div>
+            <Toaster />
+          </CartProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

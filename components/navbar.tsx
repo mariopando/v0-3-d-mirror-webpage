@@ -5,6 +5,7 @@ import { ShoppingCart, Menu, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useCart } from "@/context/cart-context"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -13,7 +14,7 @@ export default function Navbar() {
   const totalItems = items.reduce((total, item) => total + item.quantity, 0)
 
   return (
-    <header className="bg-black border-b border-gray-800 sticky top-0 z-50">
+    <header className="bg-background border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-background/95">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center">
           <Link
@@ -25,26 +26,33 @@ export default function Navbar() {
         </div>
 
         <nav
-          className={`${isMenuOpen ? "flex flex-col absolute top-16 left-0 right-0 bg-gray-900 p-4 space-y-4 md:space-y-0" : "hidden"} md:flex md:items-center md:space-x-6 md:static md:bg-transparent md:p-0`}
+          className={`${
+            isMenuOpen
+              ? "flex flex-col absolute top-16 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border p-4 space-y-4 md:space-y-0"
+              : "hidden"
+          } md:flex md:items-center md:space-x-6 md:static md:bg-transparent md:p-0 md:border-0`}
         >
-          <Link href="/" className="text-white hover:text-purple-400 transition-colors">
+          <Link href="/" className="text-foreground hover:text-purple-400 transition-colors">
             Inicio
           </Link>
-          <Link href="/productos" className="text-white hover:text-purple-400 transition-colors">
+          <Link href="/productos" className="text-foreground hover:text-purple-400 transition-colors">
             Productos
           </Link>
-          <Link href="/galeria" className="text-white hover:text-purple-400 transition-colors">
+          <Link href="/galeria" className="text-foreground hover:text-purple-400 transition-colors">
             Galería
           </Link>
-          <Link href="/nosotros" className="text-white hover:text-purple-400 transition-colors">
+          <Link href="/nosotros" className="text-foreground hover:text-purple-400 transition-colors">
             Nosotros
           </Link>
-          <Link href="/contacto" className="text-white hover:text-purple-400 transition-colors">
+          <Link href="/contacto" className="text-foreground hover:text-purple-400 transition-colors">
             Contacto
           </Link>
         </nav>
 
         <div className="flex items-center space-x-4">
+          <div className="hidden sm:block">
+            <ThemeToggle />
+          </div>
           <Link href="/usuario">
             <Button variant="ghost" size="icon">
               <User className="h-5 w-5" />
@@ -65,6 +73,15 @@ export default function Navbar() {
           </Button>
         </div>
       </div>
+
+      {/* Mobile theme toggle */}
+      {isMenuOpen && (
+        <div className="md:hidden border-t border-border p-4 bg-background/95 backdrop-blur-sm">
+          <div className="flex items-center justify-center">
+            <ThemeToggle />
+          </div>
+        </div>
+      )}
     </header>
   )
 }
