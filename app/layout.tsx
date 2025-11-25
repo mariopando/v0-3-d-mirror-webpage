@@ -41,7 +41,6 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <CartProvider>
             <div className="min-h-screen bg-background text-foreground">
-              <Navbar />
               {children}
               <Footer />
             </div>

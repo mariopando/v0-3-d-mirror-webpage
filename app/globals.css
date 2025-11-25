@@ -97,7 +97,7 @@
 
 /* Mirror specific styles */
 .mirror-container {
-  @apply bg-card border border-border rounded-lg shadow-lg;
+  @apply bg-card shadow-lg;
 }
 
 .mirror-surface {
@@ -215,4 +215,18 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+.canvas-container canvas{
+  height: 100% !important;
+  width: 100% !important;
+}
+.color-options .bluehammered{
+  background-image: url('/206.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.color-options .greenhammered{
+  background-image: url('/uneven-background-texture_1072286-34.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
 }

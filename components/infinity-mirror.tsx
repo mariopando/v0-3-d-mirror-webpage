@@ -1,9 +1,11 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import * as THREE from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
-import { Reflector } from "three/examples/jsm/objects/Reflector"
+import { RadioGroup } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { useTheme } from "next-themes"
 
 interface InfinityMirrorProps {
   width: number
@@ -11,47 +13,42 @@ interface InfinityMirrorProps {
   depth: number
   ledColor: string
   frameColor: string
-  frameWidth: number
-  frameDepth: number
-  surfaceMirrorTransparency: number
   fov: number
   aspect: number
   near: number
   far: number
-  backgroundColor: number
 }
 
-interface ProductControlsProps {
-  width: number
-  setWidth: (width: number) => void
-  height: number
-  setHeight: (height: number) => void
-  depth: number
-  setDepth: (depth: number) => void
-  ledColor: string
-  setLedColor: (color: string) => void
-  frameColor: string
-  setFrameColor: (color: string) => void
-  surfaceMirrorTransparency: number
-  setSurfaceMirrorTransparency: (transparency: number) => void
-}
-
+// @refresh reset
 export default function InfinityMirror({ 
   width, 
   height, 
   depth, 
   ledColor,
   frameColor,
-  frameWidth,
-  frameDepth,
-  surfaceMirrorTransparency,
   fov,
   aspect,
   near,
   far,
-  backgroundColor,
 }: InfinityMirrorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+
+  console.log({ 
+  width, 
+  height, 
+  depth, 
+  ledColor,
+  frameColor,
+  fov,
+  aspect,
+  near,
+  far,
+})
+
+    // Background color state
+  // const [backgroundColor, setBackgroundColor] = useState(1)
+  const { theme, setTheme } = useTheme()
+  console.log('theme', theme)
 
   // Helper function to validate dimensions
   const validateDimension = (value: number, fallback: number = 1) => {
@@ -61,8 +58,7 @@ export default function InfinityMirror({
   const widthUnits = validateDimension(width / 10)
   const heightUnits = validateDimension(height / 10)
   const depthUnits = validateDimension(depth / 10)
-  const frameWidthUnits = validateDimension(frameWidth / 20)
-  const frameDepthUnits = validateDimension(frameDepth / 20)
+  const backgroundColor = theme === 'dark' ? '#020817' : '#FFFFFF';
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -75,14 +71,14 @@ export default function InfinityMirror({
     scene.background = new THREE.Color(backgroundColor)
 
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
-    camera.position.x = Math.max(widthUnits, heightUnits) * 1.2
-    camera.position.z = Math.max(widthUnits, heightUnits) * 1.2
+    camera.position.x = Math.max(widthUnits, heightUnits)
+    camera.position.z = Math.max(widthUnits, heightUnits)
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       powerPreference: "high-performance",
     })
-    renderer.setSize(window.innerHeight / 2, window.innerHeight / 2)
+    renderer.setSize(300, 300)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
@@ -102,42 +98,82 @@ export default function InfinityMirror({
     controls.maxDistance = Math.max(widthUnits, heightUnits) * 2
     controls.update()
 
-    // Create separate scenes
-    const createFrameScene = () => {
-      const frameMaterial = new THREE.MeshStandardMaterial({
-        color: frameColor,
-        opacity: 0.9,
-        transparent: false,
+    // Hidebox
+    const createHidebox = () => {
+      const frameInnerSideMaterial = new THREE.MeshBasicMaterial({
+        color: '#000000',
+        side: THREE.FrontSide
+      })
+
+      const frameOutsideMaterial = new THREE.MeshBasicMaterial({
+        color: backgroundColor,
+        side: THREE.BackSide
       });
 
-      const safeWidth = validateDimension(widthUnits + frameWidthUnits * 2)
-      const safeHeight = validateDimension(heightUnits + frameWidthUnits * 2)
-      const safeDepth = validateDimension(frameDepthUnits)
       const frameSides: THREE.Mesh[] = []
 
       // Top frame piece
-      const topGeometry = new THREE.BoxGeometry(safeWidth, frameWidthUnits, safeDepth)
-      const topFrame = new THREE.Mesh(topGeometry, frameMaterial)
-      topFrame.position.y = safeHeight / 2 - frameWidthUnits / 2
+      const topGeometry = new THREE.BoxGeometry(widthUnits, 0.005, 3)
+      let topFrame = new THREE.Mesh(topGeometry, frameInnerSideMaterial)
+      topFrame.position.y = heightUnits / 2
+      topFrame.position.x = 0
+      topFrame.position.z =  0
+
+      frameSides.push(topFrame)
+      topFrame = new THREE.Mesh(topGeometry, frameOutsideMaterial)
+      topFrame.position.y = heightUnits / 1.99
+      topFrame.position.z = heightUnits * 0.0001
       frameSides.push(topFrame)
 
       // Bottom frame piece
-      const bottomGeometry = new THREE.BoxGeometry(safeWidth, frameWidthUnits, safeDepth)
-      const bottomFrame = new THREE.Mesh(bottomGeometry, frameMaterial)
-      bottomFrame.position.y = -safeHeight / 2 + frameWidthUnits / 2
+      const bottomGeometry = new THREE.BoxGeometry(widthUnits, 0.005, 3)
+      let bottomFrame = new THREE.Mesh(bottomGeometry, frameInnerSideMaterial)
+      bottomFrame.position.y = -heightUnits / 1.99
+      bottomFrame.position.z = 0
+
+      frameSides.push(bottomFrame)
+      bottomFrame = new THREE.Mesh(bottomGeometry, frameOutsideMaterial)
+      bottomFrame.position.y = -heightUnits / 1.985
+      bottomFrame.position.z = 0
       frameSides.push(bottomFrame)
 
       // Left frame piece
-      const leftGeometry = new THREE.BoxGeometry(frameWidthUnits, safeHeight - frameWidthUnits * 2, safeDepth)
-      const leftFrame = new THREE.Mesh(leftGeometry, frameMaterial)
-      leftFrame.position.x = -safeWidth / 2 + frameWidthUnits / 2
+      const leftGeometry = new THREE.BoxGeometry(0.005, heightUnits, 3)
+      let leftFrame = new THREE.Mesh(leftGeometry, frameInnerSideMaterial)
+      leftFrame.position.x = -widthUnits / 2
+      leftFrame.position.z = 0
+
+      frameSides.push(leftFrame)
+      leftFrame = new THREE.Mesh(leftGeometry, frameOutsideMaterial)
+      leftFrame.position.y = 0
+      leftFrame.position.x = -widthUnits / 1.985
+      leftFrame.position.z = 0 / 2
       frameSides.push(leftFrame)
 
       // Right frame piece
-      const rightGeometry = new THREE.BoxGeometry(frameWidthUnits, safeHeight - frameWidthUnits * 2, safeDepth)
-      const rightFrame = new THREE.Mesh(rightGeometry, frameMaterial)
-      rightFrame.position.x = safeWidth / 2 - frameWidthUnits / 2
+      const rightGeometry = new THREE.BoxGeometry(0.005, heightUnits, 3)
+      let rightFrame = new THREE.Mesh(rightGeometry, frameInnerSideMaterial)
+      rightFrame.position.x = widthUnits / 2
+      rightFrame.position.z = 0
+
       frameSides.push(rightFrame)
+      rightFrame = new THREE.Mesh(leftGeometry, frameOutsideMaterial)
+      rightFrame.position.x = widthUnits / 1.985
+      rightFrame.position.z = 0
+      frameSides.push(rightFrame)
+
+      // background frame piece
+      const aboveGeometry = new THREE.BoxGeometry(widthUnits, heightUnits, 0.005)
+      let aboveFrame = new THREE.Mesh(aboveGeometry, frameInnerSideMaterial)
+      aboveFrame.position.y = 0
+      aboveFrame.position.z = -1.5
+
+      frameSides.push(aboveFrame)
+      aboveFrame = new THREE.Mesh(aboveGeometry, frameOutsideMaterial)
+      aboveFrame.position.y = 0
+      aboveFrame.position.z = -1.55
+      frameSides.push(aboveFrame)
+
 
       // Add all frame pieces to the scene
       frameSides.forEach(side => scene.add(side))
@@ -145,87 +181,99 @@ export default function InfinityMirror({
       return frameSides
     }
 
-    // @refresh reset
+    const getFrameColor = (position: number) => {
+      const loader = new THREE.TextureLoader(); // Correct instantiation
 
-    // Hidebox
-    const createHidebox = () => {
-      const frameInnerSideMaterial = new THREE.MeshBasicMaterial({
-        color: 0x000000,
-        side: THREE.FrontSide
-      })
+      if (frameColor === "bluehammered") {
+        const texture = loader.load('/206.jpg');
+    
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(1, 10); // Repeats the texture 2 times horizontally and 2 times vertically
 
-      const frameOutsideMaterial = new THREE.MeshBasicMaterial({
-        color: backgroundColor,
-        side: THREE.BackSide
-      })
-      
-      const safeWidth = validateDimension(widthUnits + frameWidthUnits * 2)
-      const safeHeight = validateDimension(heightUnits + frameWidthUnits * 2)
-      const safeDepth = validateDimension(frameDepthUnits) * 3.5
-      const zPosition = -safeWidth / 4.4 + frameWidthUnits;
+        // Set texture filtering
+        texture.minFilter = THREE.LinearMipMapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        
+        // Set anisotropy for better quality at angles
+        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            
+        return new THREE.MeshBasicMaterial({
+              map: texture
+        });
+      } else if (frameColor === "greenhammered") {
+        const texture = loader.load('/uneven-background-texture_1072286-34.jpg');
+    
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(1, 10); // Repeats the texture 2 times horizontally and 2 times vertically
+
+        // Set texture filtering
+        texture.minFilter = THREE.LinearMipMapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        
+        // Set anisotropy for better quality at angles
+        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            
+        return new THREE.MeshBasicMaterial({
+              map: texture
+        });
+      } else {
+        const colorMap: { [key: string]: number } = {
+          black: 0x000000,
+          white: 0xffffff,
+          blue: 0x0088ff,
+          green: 0x00ff88,
+          yellow: 0xFFE100,
+        }
+        return new THREE.Color(colorMap[frameColor] || colorMap.pink)
+      }
+    }
+
+    const createFrameScene = () => {
+      let frameMaterial = null;
+      if(frameColor === "greenhammered" || frameColor === "bluehammered"){
+        frameMaterial =  getFrameColor(1)
+      }
+      else{
+        frameMaterial = new THREE.MeshBasicMaterial({
+          color: getFrameColor(1),
+          opacity: 1,
+          transparent: false,
+        });
+      }
+
       const frameSides: THREE.Mesh[] = []
 
       // Top frame piece
-      const topGeometry = new THREE.BoxGeometry(safeWidth, frameWidthUnits, safeDepth)
-      let topFrame = new THREE.Mesh(topGeometry, frameInnerSideMaterial)
-      topFrame.position.y = safeHeight / 2 - frameWidthUnits / 2
-      topFrame.position.z = zPosition
+      const topGeometry = new THREE.BoxGeometry(widthUnits, 0.05, depthUnits)
+      const topFrame = new THREE.Mesh(topGeometry, frameMaterial)
+      topFrame.position.y = heightUnits / 2
+      topFrame.position.z = 1.6
 
-      frameSides.push(topFrame)
-      topFrame = new THREE.Mesh(topGeometry, frameOutsideMaterial)
-      topFrame.position.y = safeHeight / 1.95 - frameWidthUnits / 1.95
-      topFrame.position.z = zPosition
       frameSides.push(topFrame)
 
       // Bottom frame piece
-      const bottomGeometry = new THREE.BoxGeometry(safeWidth, frameWidthUnits, safeDepth)
-      let bottomFrame = new THREE.Mesh(bottomGeometry, frameInnerSideMaterial)
-      bottomFrame.position.y = -safeHeight / 2 + frameWidthUnits / 2
-      bottomFrame.position.z = zPosition
-
-      frameSides.push(bottomFrame)
-      bottomFrame = new THREE.Mesh(bottomGeometry, frameOutsideMaterial)
-      bottomFrame.position.y = safeHeight / 1.95 - frameWidthUnits / 1.95
-      bottomFrame.position.z = zPosition
+      const bottomGeometry = new THREE.BoxGeometry(widthUnits, 0.05, depthUnits)
+      const bottomFrame = new THREE.Mesh(bottomGeometry, frameMaterial)
+      bottomFrame.position.y = -heightUnits / 2
+      bottomFrame.position.z = 1.6
       frameSides.push(bottomFrame)
 
       // Left frame piece
-      const leftGeometry = new THREE.BoxGeometry(frameWidthUnits, safeHeight - frameWidthUnits * 2, safeDepth)
-      let leftFrame = new THREE.Mesh(leftGeometry, frameInnerSideMaterial)
-      leftFrame.position.x = -safeWidth / 2 + frameWidthUnits
-      leftFrame.position.z = zPosition
+      const leftGeometry = new THREE.BoxGeometry(0.05, heightUnits, depthUnits)
+      const leftFrame = new THREE.Mesh(leftGeometry, frameMaterial)
+      leftFrame.position.x = -widthUnits / 2
+      leftFrame.position.z = 1.6
 
-      frameSides.push(leftFrame)
-      leftFrame = new THREE.Mesh(leftGeometry, frameOutsideMaterial)
-      leftFrame.position.y = -safeHeight / 1.95 + frameWidthUnits
-      leftFrame.position.z = zPosition
       frameSides.push(leftFrame)
 
       // Right frame piece
-      const rightGeometry = new THREE.BoxGeometry(frameWidthUnits, safeHeight - frameWidthUnits * 2, safeDepth )
-      let rightFrame = new THREE.Mesh(rightGeometry, frameInnerSideMaterial)
-      rightFrame.position.x = safeWidth / 2 - frameWidthUnits / 2
-      rightFrame.position.z = zPosition
-
+      const rightGeometry = new THREE.BoxGeometry(0.05, heightUnits, depthUnits)
+      const rightFrame = new THREE.Mesh(rightGeometry, frameMaterial)
+      rightFrame.position.x = widthUnits / 2
+      rightFrame.position.z = 1.6
       frameSides.push(rightFrame)
-      // rightFrame = new THREE.Mesh(leftGeometry, frameOutsideMaterial)
-      // rightFrame.position.x = -safeWidth / 2 + frameWidthUnits / 2
-      // rightFrame.position.z = zPosition
-      // frameSides.push(rightFrame)
-
-
-      // background frame piece
-      const aboveGeometry = new THREE.BoxGeometry(safeWidth, safeHeight, 0.01)
-      let aboveFrame = new THREE.Mesh(aboveGeometry, frameInnerSideMaterial)
-      aboveFrame.position.y = frameWidthUnits
-      aboveFrame.position.z = zPosition - 1
-
-      frameSides.push(aboveFrame)
-      // aboveFrame = new THREE.Mesh(aboveGeometry, frameOutsideMaterial)
-      // aboveFrame.position.x = -safeWidth / 2 + frameWidthUnits / 2
-      // aboveFrame.position.z = zPosition
-      // frameSides.push(aboveFrame)
-
 
       // Add all frame pieces to the scene
       frameSides.forEach(side => scene.add(side))
@@ -235,12 +283,12 @@ export default function InfinityMirror({
 
     const createSurfaceMirrorScene = () => {
       const mirrorGeometry = new THREE.PlaneGeometry(
-        validateDimension(widthUnits),
-        validateDimension(heightUnits)
+        widthUnits,
+        heightUnits
       )
       const mirrorMaterial = new THREE.MeshStandardMaterial({
-        color: 0x000000,
-        opacity: validateDimension(surfaceMirrorTransparency, 1) / 5,
+        color: 0x00FE48,
+        opacity: 0.3,
         transparent: true,
         transmission: 0.9,  // Amount of light passing through
         reflectivity: 0.7,    // Reflectivity (0 to 1)
@@ -251,36 +299,36 @@ export default function InfinityMirror({
         clearcoat: 1,        // Simulates a thin clear coat layer
       })
       const mirror = new THREE.Mesh(mirrorGeometry, mirrorMaterial)
-      mirror.position.z = validateDimension(frameDepthUnits / 4) + 0.001
+      mirror.position.z = 1.6
       scene.add(mirror)
     }
 
-    const numLeds = 20
+    const numLeds = 10
 
     const createLedsScene = () => {
-      const ledSize = 0.05
-      const leds: THREE.Mesh[] = []
+    const ledSize = 0.05
+    const leds: THREE.Mesh[] = []
 
-      const getLedColor = (position: number) => {
-        if (ledColor === "rainbow") {
-          const hue = (position + 0.5) / 2
-          return new THREE.Color().setHSL(hue, 1, 0.5)
-        } else {
-          const colorMap: { [key: string]: number } = {
-            white: 0xffffff,
-            blue: 0x0088ff,
-            green: 0x00ff88,
-            purple: 0x8800ff,
-            pink: 0xff0088
-          }
-          return new THREE.Color(colorMap[ledColor] || colorMap.pink)
+    const getLedColor = (position: number) => {
+      if (ledColor === "rainbow") {
+        const hue = (position + 0.5) / 2
+        return new THREE.Color().setHSL(hue, 1, 0.5)
+      } else {
+        const colorMap: { [key: string]: number } = {
+          white: 0xffffff,
+          blue: 0x0088ff,
+          green: 0x00ff88,
+          purple: 0x8800ff,
+          pink: 0xff0088
         }
+        return new THREE.Color(colorMap[ledColor] || colorMap.pink)
       }
+    }
 
       const createLed = (x: number, y: number, position: number) => {
         const ledGeometry = new THREE.BoxGeometry(
-          validateDimension(ledSize),
-          validateDimension(ledSize),
+          ledSize,
+          ledSize,
           0.05
         )
         const color = getLedColor(position)
@@ -293,10 +341,10 @@ export default function InfinityMirror({
         })
         const led = new THREE.Mesh(ledGeometry, ledMaterial)
         // Position LED considering frame width
-       led.position.set(x, y, depthUnits / 2 + 0.02)
+       led.position.set(x, y, depth / 2 + 0.01)
 
-        scene.add(led)
-        leds.push(led)
+        // scene.add(led)
+        // leds.push(led)
         createInfiniteEffect(x, y, position)
       }
 
@@ -307,7 +355,7 @@ export default function InfinityMirror({
 
       for (let i = 0; i < numPoints; i++) {
         const depth = ((i + 1) / numPoints) * maxDepth
-        const z = depthUnits / 2 - depth * 0.2
+        const z = 2 - depth * 0.2
 
         // Scale coordinates slightly to create perspective
         const scale = 0.97 - i * 0.01
@@ -334,6 +382,7 @@ export default function InfinityMirror({
     }
 
     const createPerimeterLeds = () => {
+      let numbLeds = numLeds;
       // Top edge
       for (let i = 0; i < numLeds; i++) {
         const x = -widthUnits / 2 + (widthUnits * i) / (numLeds - 1)
@@ -346,7 +395,7 @@ export default function InfinityMirror({
       for (let i = 0; i < numLeds; i++) {
         const x = widthUnits / 2
         const y = heightUnits / 2 - (heightUnits * i) / (numLeds - 1)
-        const position = (i + numLeds) / (numLeds * 4 - 4)
+        const position = (i + numLeds) / numbLeds
         createLed(x, y, position)
       }
 
@@ -354,7 +403,7 @@ export default function InfinityMirror({
       for (let i = 0; i < numLeds; i++) {
         const x = widthUnits / 2 - (widthUnits * i) / (numLeds - 1)
         const y = -heightUnits / 2
-        const position = (i + numLeds * 2) / (numLeds * 4 - 4)
+        const position = (i + numLeds * 2) / numbLeds
         createLed(x, y, position)
       }
 
@@ -362,7 +411,7 @@ export default function InfinityMirror({
       for (let i = 0; i < numLeds; i++) {
         const x = -widthUnits / 2
         const y = -heightUnits / 2 + (heightUnits * i) / (numLeds - 1)
-        const position = (i + numLeds * 3) / (numLeds * 4 - 4)
+        const position = (i + numLeds * 3) / numbLeds
         createLed(x, y, position)
       }
     }
@@ -416,11 +465,13 @@ export default function InfinityMirror({
       renderer.dispose()
       controls.dispose()
     }
-  }, [width, height, depth, ledColor, widthUnits, heightUnits, depthUnits, frameColor, surfaceMirrorTransparency, fov, aspect, near, far, backgroundColor])
+  }, [width, height, depth, ledColor, widthUnits, heightUnits, depthUnits, frameColor, fov, aspect, near, far, backgroundColor])
 
   return (
-    <div className="relative">
-      <div ref={containerRef} className="w-[400px] h-[400px]"></div>
-    </div>
+    <section className="flex flex-col lg:flex-row gap-4 items-center mb-16">
+        <div className="canvas-container">
+          <div ref={containerRef}></div>
+        </div>
+      </section>
   )
 }

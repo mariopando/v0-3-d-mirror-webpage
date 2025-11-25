@@ -9,22 +9,21 @@ import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
 import InfinityMirror from "@/components/infinity-mirror"
-import { RadioGroup } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { InfoIcon } from "lucide-react"
 
 export default function Home() {
-  const [width, setWidth] = useState(100)
-  const [height, setHeight] = useState(100)
-  const [depth, setDepth] = useState(10)
+  const [width, setWidth] = useState(40)
+  const [height, setHeight] = useState(50)
+  const [depth, setDepth] = useState(4)
   const [ledColor, setLedColor] = useState("rainbow")
   const [isClient, setIsClient] = useState(false)
   const { addToCart } = useCart()
 
   // New state variables
   const [frameColor, setFrameColor] = useState("#FFFFFF")
-  const [frameWidth, setFrameWidth] = useState(2)
   const [frameDepth, setFrameDepth] = useState(20)
-  const [surfaceMirrorTransparency, setSurfaceMirrorTransparency] = useState(1)
 
   // Camera settings state
   const [fov, setFov] = useState(60)
@@ -32,13 +31,11 @@ export default function Home() {
   const [near, setNear] = useState(0.1)
   const [far, setFar] = useState(1000)
 
-  // Background color state
-  const [backgroundColor, setBackgroundColor] = useState(1)
-  const [bgGrayLevel, setBgGrayLevel] = useState(1)
+
 
   // Fix hydration issues
   useEffect(() => {
-    setIsClient(true)
+    // setIsClient(true)
   }, [])
 
   const calculatePrice = () => {
@@ -64,49 +61,58 @@ export default function Home() {
     addToCart(product)
   }
 
-  // Helper to map 1-5 to grayscale hex
-  const getGrayHex = (level: number) => {
-    const gray = Math.round(((level - 1) / 4) * 255)
-    return (gray << 16) | (gray << 8) | gray
-  }
-
-  const bgGray = getGrayHex(bgGrayLevel)
-
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
         <section className="flex flex-col lg:flex-row gap-8 items-center mb-16">
-          <div className="w-full lg:w-1/2 flex justify-center">
-            {isClient && (
-              <div className="mirror-container p-4">
+          <div className="w-full h-full lg:w-1/2">
                 <InfinityMirror
                   width={width}
                   height={height}
                   depth={depth}
                   ledColor={ledColor}
                   frameColor={frameColor}
-                  frameWidth={frameWidth}
-                  frameDepth={frameDepth}
-                  surfaceMirrorTransparency={surfaceMirrorTransparency}
                   fov={fov}
                   aspect={aspect}
                   near={near}
                   far={far}
-                  backgroundColor={bgGray}
                 />
-              </div>
-            )}
           </div>
           <div className="w-full lg:w-1/2">
-            <h1 className="text-4xl font-bold mb-4 gradient-text">Espejo Infinito Personalizado</h1>
-            <p className="text-muted-foreground mb-6 leading-relaxed">
-              Experimenta la fascinante profundidad de nuestros espejos infinitos premium. Cada espejo está fabricado
-              artesanalmente con precisión y cuenta con iluminación LED de alta calidad que crea un impresionante efecto
-              de túnel infinito. Personaliza las dimensiones y el color de los LED para crear la pieza perfecta para tu
-              espacio.
-            </p>
+            <h1 className="text-4xl font-bold mb-4 gradient-text">Crea tu propio</h1>
+            <div className="tabs">
+              <Tabs defaultValue="mirror" className="w-full mb-6">
+                <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 gap-4">
+                  <TabsTrigger 
+                    value="mirror" 
+                    className="data-[state=active]:bg-transparent data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg py-3 rounded-lg border border-border"
+                  >
+                    <h1 className="text-2xl font-bold gradient-text">Espejo infinito</h1>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="table" 
+                    disabled 
+                    className="relative bg-transparent border border-border rounded-lg py-3 opacity-70"
+                  >
+                    <h1 className="text-2xl font-bold text-muted-foreground">Mesa de centro infinita</h1>
+                    <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
+                      ¡Pronto!
+                    </span>
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="mirror" className="mt-6">
+                  <p className="text-2xl text-muted-foreground mb-6 leading-relaxed gap-4 text-center">
+                    Descubre la experiencia sensorial de nuestros espejos infinitos de edición maestra.
+                    Cada pieza es una sinfonía de precisión milimétrica y artesanía experta, elige y personalizalo como quieras!
+                  </p>
+                </TabsContent>
+                <TabsContent value="table">
+                  {/* Content for the table tab (will be disabled for now) */}
+                </TabsContent>
+              </Tabs>
+            </div>
 
             <div className="bg-card border border-border rounded-lg p-6 mb-6 shadow-sm">
               <ProductControls
@@ -120,12 +126,6 @@ export default function Home() {
                 setLedColor={setLedColor}
                 frameColor={frameColor}
                 setFrameColor={setFrameColor}
-                frameWidth={frameWidth}
-                setFrameWidth={setFrameWidth}
-                frameDepth={frameDepth}
-                setFrameDepth={setFrameDepth}
-                surfaceMirrorTransparency={surfaceMirrorTransparency}
-                setSurfaceMirrorTransparency={setSurfaceMirrorTransparency}
                 fov={fov}
                 setFov={setFov}
                 aspect={aspect}
@@ -154,61 +154,34 @@ export default function Home() {
                 <li>
                   Dimensiones: {width}cm × {height}cm × {depth}cm
                 </li>
-                <li>Marco: Aluminio negro premium</li>
+                <li>Marco: Madera pintada</li>
+                <li>Espejo: 2mm espesor</li>
+                <li>Led: Con conexion WiFi y/o Bluetooth a traves de app para Android/iOS</li>
                 <li>
-                  Tipo de LED:{" "}
-                  {ledColor === "rainbow"
-                    ? "Gradiente RGB Arcoíris"
-                    : ledColor === "white"
+                  Color del marco de LED:{" "}
+                  {frameColor === "black"
+                    ? "Negro"
+                    : frameColor === "white"
                       ? "Blanco"
-                      : ledColor === "blue"
+                      : frameColor === "blue"
                         ? "Azul"
-                        : ledColor === "green"
+                        : frameColor === "green"
                           ? "Verde"
-                          : ledColor === "purple"
+                          : frameColor === "purple"
                             ? "Púrpura"
-                            : "Rosa"}
+                              : frameColor === "pink"
+                                ? "Rosa"
+                                  : frameColor === "bluehammered"
+                                    ? "Azul martillado"
+                                    : frameColor === "greenhammered"
+                                      ? "Verde martillado"
+                                : ""}
                 </li>
                 <li>Alimentación: Enchufe estándar (adaptador incluido)</li>
                 <li>Control remoto incluido</li>
-                <li>2 años de garantía</li>
+                <li>1 año de garantía</li>
               </ul>
             </div>
-          </div>
-        </section>
-
-        <section className="flex flex-col lg:flex-row gap-4 items-center mb-16">
-          <div className="w-full lg:w-1/2 flex flex-col items-center">
-            <Label className="block text-sm font-medium mb-4 text-foreground">Color de fondo del visor 3D</Label>
-            <RadioGroup
-              className="flex gap-4"
-              value={String(bgGrayLevel)}
-              onValueChange={(val) => setBgGrayLevel(Number(val))}
-            >
-              {[1, 2, 3, 4, 5].map((level) => (
-                <div key={level} className="flex flex-col items-center">
-                  <input
-                    type="radio"
-                    id={`bg-${level}`}
-                    name="background"
-                    value={String(level)}
-                    checked={bgGrayLevel === level}
-                    onChange={() => setBgGrayLevel(level)}
-                    className="sr-only"
-                  />
-                  <label htmlFor={`bg-${level}`} className="cursor-pointer flex flex-col items-center">
-                    <span
-                      className="w-8 h-8 rounded border-2 border-border block mb-1 hover:scale-110 transition-transform"
-                      style={{
-                        background: `#${getGrayHex(level).toString(16).padStart(6, "0")}`,
-                        borderColor: bgGrayLevel === level ? "hsl(var(--primary))" : "hsl(var(--border))",
-                      }}
-                    />
-                    <span className="text-xs text-muted-foreground">{level}</span>
-                  </label>
-                </div>
-              ))}
-            </RadioGroup>
           </div>
         </section>
 
