@@ -42,7 +42,6 @@ export default function RootLayout({
           <CartProvider>
             <div className="min-h-screen bg-background text-foreground">
               {children}
-              <Footer />
             </div>
             <Toaster />
           </CartProvider>

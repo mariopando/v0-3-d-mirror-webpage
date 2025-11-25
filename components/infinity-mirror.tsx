@@ -87,16 +87,28 @@ export default function InfinityMirror({
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.dampingFactor = 0.05
-    controls.enableZoom = true
-    controls.enablePan = true
     controls.rotateSpeed = 0.5
     controls.autoRotate = true
     controls.autoRotateSpeed = 1
-    controls.minPolarAngle = Math.PI / 4; // 45 degrees
-    controls.maxPolarAngle = Math.PI / 2; // 90 degrees (horizon)
+    controls.autoRotateDelay = 0 // Rotación continua sin pausas
+
+    // Restricciones de ángulo para evitar ver la parte trasera
+    controls.minAzimuthAngle = -Math.PI/4
+    controls.maxAzimuthAngle = Math.PI/4
+    controls.minPolarAngle = Math.PI/4
+    controls.maxPolarAngle = Math.PI/2
+
+    // Configuración de distancia
     controls.minDistance = Math.max(widthUnits, heightUnits) * 0.5
     controls.maxDistance = Math.max(widthUnits, heightUnits) * 2
+
+    // Limitaciones de movimiento
+    controls.enablePan = false
+    controls.enableZoom = true
+    controls.screenSpacePanning = false
+
     controls.update()
+
 
     // Hidebox
     const createHidebox = () => {
@@ -220,11 +232,12 @@ export default function InfinityMirror({
         });
       } else {
         const colorMap: { [key: string]: number } = {
-          black: 0x000000,
           white: 0xffffff,
           blue: 0x0088ff,
           green: 0x00ff88,
           yellow: 0xFFE100,
+          purple: 0x850089,
+          pink: 0xFB87FE,
         }
         return new THREE.Color(colorMap[frameColor] || colorMap.pink)
       }
@@ -287,7 +300,7 @@ export default function InfinityMirror({
         heightUnits
       )
       const mirrorMaterial = new THREE.MeshStandardMaterial({
-        color: 0x00FE48,
+        color: 0xFFFFFF,
         opacity: 0.3,
         transparent: true,
         transmission: 0.9,  // Amount of light passing through
@@ -318,8 +331,9 @@ export default function InfinityMirror({
           white: 0xffffff,
           blue: 0x0088ff,
           green: 0x00ff88,
-          purple: 0x8800ff,
-          pink: 0xff0088
+          yellow: 0xFFE100,
+          purple: 0x850089,
+          pink: 0xFB87FE,
         }
         return new THREE.Color(colorMap[ledColor] || colorMap.pink)
       }

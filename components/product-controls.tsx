@@ -131,13 +131,6 @@ export default function ProductControls({
         <Label>Color del marco (referencial) </Label>
         <RadioGroup value={frameColor} onValueChange={setFrameColor} className="grid grid-cols-2 gap-2">
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="black" id="black" />
-            <Label htmlFor="black" className="flex items-center">
-              <div className="w-4 h-4 mr-2 bg-black border-white"></div>
-              Blanco
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
             <RadioGroupItem value="white" id="white" />
             <Label htmlFor="white" className="flex items-center">
               <div className="w-4 h-4 mr-2 bg-white border-black"></div>
@@ -162,7 +155,7 @@ export default function ProductControls({
             <RadioGroupItem value="yellow" id="yellow" />
             <Label htmlFor="yellow" className="flex items-center">
               <div className="w-4 h-4 mr-2 bg-yellow-400"></div>
-              Púrpura
+              Amarillo
             </Label>
           </div>
           <div className="flex items-center space-x-2">
