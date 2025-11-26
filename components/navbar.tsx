@@ -38,8 +38,8 @@ export default function Navbar() {
           <Link href="/productos" className="text-foreground hover:text-purple-400 transition-colors">
             Productos
           </Link>
-          <Link href="/galeria" className="text-foreground hover:text-purple-400 transition-colors">
-            Galería
+          <Link href="/aplicaciones" className="text-foreground hover:text-purple-400 transition-colors">
+            Aplicaciones
           </Link>
           <Link href="/nosotros" className="text-foreground hover:text-purple-400 transition-colors">
             Nosotros
