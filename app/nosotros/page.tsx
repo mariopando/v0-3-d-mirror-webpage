@@ -20,7 +20,7 @@ export default function AboutPage() {
             </p>
             <p className="text-gray-300">
               Desde entonces, nos hemos especializado en la creación de espejos infinitos personalizados, combinando
-              tecnología LED de vanguardia con diseño artesanal de alta calidad. Hoy, nuestros productos se encuentran
+              tecnología LED de vanguardia con diseño artesanal de alta calidad. Hoy, nuestros servicios se encuentran
               en hogares, oficinas, restaurantes y hoteles en todo Chile y Latinoamérica.
             </p>
           </div>
@@ -72,18 +72,23 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
               <div className="text-center">
                 <div className="w-24 h-24 rounded-full bg-gray-800 mx-auto mb-4"></div>
-                <h3 className="font-semibold">Alejandro Rojas</h3>
-                <p className="text-gray-400 text-sm">Fundador y Director Creativo</p>
+                <h3 className="font-semibold">Don Gabi</h3>
+                <p className="text-gray-400 text-sm">Ideas a cambio de pelos, Director de arte gay</p>
               </div>
               <div className="text-center">
                 <div className="w-24 h-24 rounded-full bg-gray-800 mx-auto mb-4"></div>
-                <h3 className="font-semibold">Camila Vega</h3>
-                <p className="text-gray-400 text-sm">Ingeniera de Iluminación</p>
+                <h3 className="font-semibold">Vicenta</h3>
+                <p className="text-gray-400 text-sm">Constructor de cajitas gay</p>
               </div>
               <div className="text-center">
                 <div className="w-24 h-24 rounded-full bg-gray-800 mx-auto mb-4"></div>
-                <h3 className="font-semibold">Matías Fuentes</h3>
-                <p className="text-gray-400 text-sm">Diseñador de Producto</p>
+                <h3 className="font-semibold">Renata</h3>
+                <p className="text-gray-400 text-sm">Constructor de cajitas gay</p>
+              </div>
+              <div className="text-center">
+                <div className="w-24 h-24 rounded-full bg-gray-800 mx-auto mb-4"></div>
+                <h3 className="font-semibold">Mario Pando</h3>
+                <p className="text-gray-400 text-sm">CEO/CTO</p>
               </div>
             </div>
           </div>

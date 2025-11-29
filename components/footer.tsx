@@ -31,13 +31,13 @@ export default function Footer() {
             <h4 className="font-semibold mb-4 text-foreground">Tienda</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/productos" className="text-muted-foreground hover:text-purple-400 transition-colors">
-                  Todos los Productos
+                <Link href="/servicios" className="text-muted-foreground hover:text-purple-400 transition-colors">
+                  Todos los Servicios
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/productos/personalizados"
+                  href="/servicios/personalizados"
                   className="text-muted-foreground hover:text-purple-400 transition-colors"
                 >
                   Espejos Personalizados
@@ -45,7 +45,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/productos/controladores"
+                  href="/servicios/controladores"
                   className="text-muted-foreground hover:text-purple-400 transition-colors"
                 >
                   Controladores LED
@@ -53,7 +53,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/productos/accesorios"
+                  href="/servicios/accesorios"
                   className="text-muted-foreground hover:text-purple-400 transition-colors"
                 >
                   Accesorios

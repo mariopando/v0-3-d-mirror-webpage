@@ -20,7 +20,7 @@ export default function AboutPage() {
             </p>
             <p className="text-gray-300">
               Desde entonces, nos hemos especializado en la creación de espejos infinitos personalizados, combinando
-              tecnología LED de vanguardia con diseño artesanal de alta calidad. Hoy, nuestros productos se encuentran
+              tecnología LED de vanguardia con diseño artesanal de alta calidad. Hoy, nuestros servicios se encuentran
               en hogares, oficinas, restaurantes y hoteles en todo Chile y Latinoamérica.
             </p>
           </div>

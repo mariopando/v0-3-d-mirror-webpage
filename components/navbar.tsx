@@ -35,8 +35,8 @@ export default function Navbar() {
           <Link href="/" className="text-foreground hover:text-purple-400 transition-colors">
             Inicio
           </Link>
-          <Link href="/productos" className="text-foreground hover:text-purple-400 transition-colors">
-            Productos
+          <Link href="/servicios" className="text-foreground hover:text-purple-400 transition-colors">
+            Servicios
           </Link>
           <Link href="/aplicaciones" className="text-foreground hover:text-purple-400 transition-colors">
             Aplicaciones

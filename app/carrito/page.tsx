@@ -60,9 +60,9 @@ export default function CartPage() {
         <div className="container mx-auto px-4 py-16 text-center">
           <h1 className="text-3xl font-bold mb-6">Tu Carrito está Vacío</h1>
           <p className="text-gray-400 mb-8">No tienes productos en tu carrito de compras.</p>
-          <Link href="/productos">
+          <Link href="/servicios">
             <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-              Ver Productos
+              Ver Servicios
             </Button>
           </Link>
         </div>
