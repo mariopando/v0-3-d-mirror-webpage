@@ -13,7 +13,7 @@ export default function AboutPage() {
           <div className="mb-12 bg-gray-900 p-8 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Nuestra Historia</h2>
             <p className="text-gray-300 mb-4">
-              TallerModerno nació en 2018 como un pequeño taller de diseño en Santiago de Chile, fundado por un grupo de
+              Taller Ideas nació en 2018 como un pequeño taller de diseño en Santiago de Chile, fundado por un grupo de
               ingenieros y artistas apasionados por la tecnología y el diseño. Lo que comenzó como un proyecto para
               crear piezas de arte digital para exposiciones locales, rápidamente evolucionó cuando descubrimos la
               fascinación que generaban nuestros espejos infinitos.
@@ -28,7 +28,7 @@ export default function AboutPage() {
           <div className="mb-12 bg-gray-900 p-8 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Nuestra Misión</h2>
             <p className="text-gray-300">
-              En TallerModerno, nuestra misión es transformar espacios ordinarios en experiencias extraordinarias a
+              En Taller Ideas, nuestra misión es transformar espacios ordinarios en experiencias extraordinarias a
               través de nuestros espejos infinitos. Creemos que la tecnología y el arte pueden combinarse para crear
               piezas que no solo decoran, sino que también inspiran y fascinan.
             </p>

@@ -12,7 +12,7 @@ import Script from "next/script"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "TallerModerno | Espejos Infinitos LED Personalizados",
+  title: "Taller Ideas | Espejos Infinitos LED Personalizados",
   description:
     "Espejos infinitos premium con iluminación LED. Crea tu propio espejo infinito único con dimensiones y colores LED ajustables.",
   generator: "v0.dev",

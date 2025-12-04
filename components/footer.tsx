@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4 gradient-text">TallerModerno</h3>
+            <h3 className="text-xl font-bold mb-4 gradient-text">Taller Ideas</h3>
             <p className="mb-4 text-muted-foreground leading-relaxed">
               Creando impresionantes espejos infinitos con materiales premium y tecnología LED de vanguardia.
             </p>
@@ -100,7 +100,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between">
-          <p className="text-muted-foreground">&copy; 2023 TallerModerno. Todos los derechos reservados.</p>
+          <p className="text-muted-foreground">&copy; 2023 Taller Ideas. Todos los derechos reservados.</p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <Link href="/privacidad" className="text-muted-foreground hover:text-purple-400 transition-colors">
               Política de Privacidad

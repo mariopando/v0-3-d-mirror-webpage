@@ -1,28 +1,26 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Trash2, Plus, Minus, CreditCard } from "lucide-react"
+import { Trash2, Plus, Minus, CreditCard, Loader } from "lucide-react"
 import Link from "next/link"
-import { initMercadoPago, Wallet } from "@mercadopago/sdk-react"
 import { Input } from "@/components/ui/input"
-
-// Inicializar MercadoPago con la clave pública de prueba
-// En producción, esto debería venir de variables de entorno
-initMercadoPago("TEST-a1234567-1234-1234-1234-123456789012")
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { initializePayment, confirmPayment, PaymentInitializeRequest } from "@/lib/payment-service"
 
 export default function CartPage() {
   const { items, removeFromCart, updateQuantity, totalPrice, clearCart } = useCart()
   const [isCheckingOut, setIsCheckingOut] = useState(false)
-  const [preferenceId, setPreferenceId] = useState<string | null>(null)
+  const [paymentProvider, setPaymentProvider] = useState<'transbank' | 'mercado_pago'>('transbank')
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [transactionId, setTransactionId] = useState<string | null>(null)
 
-  // Datos de envío
   const [shippingInfo, setShippingInfo] = useState({
     name: "",
     email: "",
@@ -38,18 +36,54 @@ export default function CartPage() {
     setShippingInfo((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleCheckout = async () => {
-    setIsCheckingOut(true)
+  const validateShippingInfo = (): boolean => {
+    return (
+      shippingInfo.name.trim() !== "" &&
+      shippingInfo.email.trim() !== "" &&
+      shippingInfo.phone.trim() !== "" &&
+      shippingInfo.address.trim() !== "" &&
+      shippingInfo.city.trim() !== "" &&
+      shippingInfo.region.trim() !== "" &&
+      shippingInfo.postalCode.trim() !== ""
+    )
+  }
+
+  const handlePayment = async () => {
+    if (!validateShippingInfo()) {
+      setError("Por favor, completa todos los campos de envío")
+      return
+    }
+
+    setIsProcessing(true)
+    setError(null)
 
     try {
-      // En un caso real, esto sería una llamada a tu API para crear una preferencia de pago
-      // Simulamos la creación de una preferencia
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const orderId = `ORD-${Date.now()}`
+      const paymentData: PaymentInitializeRequest = {
+        amount: totalPrice,
+        currency: "CLP",
+        orderId,
+        description: `Pedido de Espejo Infinito - ${items.length} producto(s)`,
+        customerEmail: shippingInfo.email,
+        customerName: shippingInfo.name,
+        returnUrl: `${window.location.origin}/carrito/confirmacion?orderId=${orderId}`
+      }
 
-      // ID de preferencia de prueba
-      setPreferenceId("123456789")
-    } catch (error) {
-      console.error("Error al crear la preferencia de pago", error)
+      const response = await initializePayment(paymentProvider, paymentData)
+      
+      if (response.redirectUrl) {
+        setTransactionId(response.transactionId)
+        // Redirect to payment provider
+        window.location.href = response.redirectUrl
+      } else {
+        throw new Error("No redirect URL provided")
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Error al procesar el pago"
+      setError(errorMessage)
+      console.error("Payment error:", err)
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -179,23 +213,12 @@ export default function CartPage() {
 
               {!isCheckingOut ? (
                 <Button
-                  onClick={handleCheckout}
+                  onClick={() => setIsCheckingOut(true)}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 >
                   <CreditCard className="mr-2 h-5 w-5" />
                   Proceder al Pago
                 </Button>
-              ) : preferenceId ? (
-                <div className="space-y-4">
-                  <div className="bg-green-900/30 border border-green-500 text-green-300 p-4 rounded-lg">
-                    <p>¡Estás a un paso de completar tu compra!</p>
-                  </div>
-
-                  {/* Botón de pago de MercadoPago */}
-                  <div className="w-full">
-                    <Wallet initialization={{ preferenceId }} />
-                  </div>
-                </div>
               ) : (
                 <div className="space-y-6">
                   <h3 className="font-semibold">Información de Envío</h3>
@@ -296,12 +319,55 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={() => setPreferenceId("123456789")}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                  >
-                    Continuar con el Pago
-                  </Button>
+                  <div className="space-y-3">
+                    <h3 className="font-semibold">Método de Pago</h3>
+                    <RadioGroup value={paymentProvider} onValueChange={(value) => setPaymentProvider(value as 'transbank' | 'mercado_pago')}>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="transbank" id="transbank" />
+                        <label htmlFor="transbank" className="cursor-pointer">Transbank</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="mercado_pago" id="mercado_pago" />
+                        <label htmlFor="mercado_pago" className="cursor-pointer">Mercado Pago</label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {error && (
+                    <div className="bg-red-900/30 border border-red-500 text-red-300 p-4 rounded-lg">
+                      <p>{error}</p>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Button
+                      onClick={handlePayment}
+                      disabled={isProcessing}
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader className="mr-2 h-5 w-5 animate-spin" />
+                          Procesando...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="mr-2 h-5 w-5" />
+                          Pagar ${formatCurrency(totalPrice)}
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setIsCheckingOut(false)
+                        setError(null)
+                      }}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Volver
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

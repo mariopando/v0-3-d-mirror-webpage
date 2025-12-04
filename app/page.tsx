@@ -177,9 +177,9 @@ export default function Home() {
                                       ? "Verde martillado"
                                 : ""}
                 </li>
-                <li>Alimentación: Enchufe estándar (adaptador incluido)</li>
-                <li>Control remoto incluido</li>
+                <li>Alimentación por USB</li>
                 <li>1 año de garantía</li>
+                <li>Despacho a todo Chile, en 48 horas para productos prefabricados y de 6 a 12 días para productos personalizados</li>
               </ul>
             </div>
           </div>
@@ -193,20 +193,19 @@ export default function Home() {
             <div className="bg-card border border-border p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <h3 className="text-xl font-semibold mb-3 text-foreground">Calidad Premium</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Fabricados artesanalmente con materiales premium e ingeniería de precisión para un efecto infinito
-                impecable.
+                Nuestros Espejos Infinitos son fabricados artesanalmente con materiales de primera calidad y una ingeniería de precisión que les otorga un efecto infinito impecable. Cada espejo es una obra de arte, diseñada para brindar una experiencia visual excepcional en tu hogar.
               </p>
             </div>
             <div className="bg-card border border-border p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <h3 className="text-xl font-semibold mb-3 text-foreground">Personalizable</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Elige las dimensiones, colores LED y estilo del marco para crear tu espejo perfecto.
+                Elige las dimensiones, colores LED y el estilo del marco para crear el espejo perfecto que se adapte a tus necesidades y a la decoración de tu espacio. Personaliza tu Espejo Infinito y conviértelo en una pieza única que refleje tu estilo.
               </p>
             </div>
             <div className="bg-card border border-border p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <h3 className="text-xl font-semibold mb-3 text-foreground">Fácil Instalación</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Sistema de montaje en pared simple y conexión plug-and-play. No se necesita cableado especial.
+                Nuestros Espejos Infinitos cuentan con un sistema de montaje en pared simple y una conexión plug-and-play. No necesitas realizar ningún cableado especial, lo que hace que la instalación sea rápida y sencilla. Disfruta de la belleza de tu nuevo espejo sin complicaciones.
               </p>
             </div>
           </div>
