@@ -128,62 +128,97 @@ export default function ProductControls({
       </div>
 
       <div className="space-y-3 color-options">
-        <Label>Color del marco (referencial) </Label>
+        <Label>Color del marco (referencial)</Label>
         <RadioGroup value={frameColor} onValueChange={setFrameColor} className="grid grid-cols-2 gap-2">
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="white" id="white" />
-            <Label htmlFor="white" className="flex items-center">
-              <div className="w-4 h-4 mr-2 bg-white border-black"></div>
+            <RadioGroupItem value="madera-natural" id="madera-natural" />
+            <Label htmlFor="madera-natural" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-amber-700"></div>
+              Madera natural
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="nogal" id="nogal" />
+            <Label htmlFor="nogal" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-amber-900"></div>
+              Nogal
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="caoba" id="caoba" />
+            <Label htmlFor="caoba" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-red-900"></div>
+              Caoba
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="blanco" id="blanco" />
+            <Label htmlFor="blanco" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-white border border-black"></div>
               Blanco
             </Label>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="blue" id="blue" />
-            <Label htmlFor="blue" className="flex items-center">
-              <div className="w-4 h-4 mr-2 bg-blue-900"></div>
-              Azul
+            <RadioGroupItem value="negro" id="negro" />
+            <Label htmlFor="negro" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-black"></div>
+              Negro
             </Label>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="green" id="green" />
-            <Label htmlFor="green" className="flex items-center">
-              <div className="w-4 h-4 mr-2 bg-green-800"></div>
+            <RadioGroupItem value="rojo" id="rojo" />
+            <Label htmlFor="rojo" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-red-600"></div>
+              Rojo
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="azul" id="azul" />
+            <Label htmlFor="azul" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-blue-600"></div>
+              Azúl
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="verde" id="verde" />
+            <Label htmlFor="verde" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-green-600"></div>
               Verde
             </Label>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="yellow" id="yellow" />
-            <Label htmlFor="yellow" className="flex items-center">
-              <div className="w-4 h-4 mr-2 bg-yellow-400"></div>
+            <RadioGroupItem value="amarillo" id="amarillo" />
+            <Label htmlFor="amarillo" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-yellow-500"></div>
               Amarillo
             </Label>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="purple" id="purple" />
-            <Label htmlFor="purple" className="flex items-center">
-              <div className="w-4 h-4 mr-2 bg-purple-800"></div>
-              Púrpura
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="pink" id="pink" />
-            <Label htmlFor="pink" className="flex items-center">
-              <div className="w-4 h-4 mr-2 bg-pink-300"></div>
-              Rosa
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="bluehammered" id="bluehammered" />
-            <Label htmlFor="bluehammered" className="flex items-center">
-              <div className="w-4 h-4 mr-2 bluehammered"></div>
-              Martillado Azul
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="greenhammered" id="greenhammered" />
-            <Label htmlFor="greenhammered" className="flex items-center">
-              <div className="w-4 h-4 mr-2 greenhammered"></div>
+            <RadioGroupItem value="martillado-verde" id="martillado-verde" />
+            <Label htmlFor="martillado-verde" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-green-700 opacity-75"></div>
               Martillado Verde
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="martillado-azul" id="martillado-azul" />
+            <Label htmlFor="martillado-azul" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-blue-700 opacity-75"></div>
+              Martillado Azúl
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="martillado-cobre" id="martillado-cobre" />
+            <Label htmlFor="martillado-cobre" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-amber-600 opacity-75"></div>
+              Martillado Cobre
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="aluminio" id="aluminio" />
+            <Label htmlFor="aluminio" className="flex items-center">
+              <div className="w-4 h-4 mr-2 bg-gray-400"></div>
+              Aluminio
             </Label>
           </div>
         </RadioGroup>

@@ -22,7 +22,7 @@ export default function Home() {
   const { addToCart } = useCart()
 
   // New state variables
-  const [frameColor, setFrameColor] = useState("#FFFFFF")
+  const [frameColor, setFrameColor] = useState("madera-natural")
   const [frameDepth, setFrameDepth] = useState(20)
 
   // Camera settings state
@@ -84,19 +84,29 @@ export default function Home() {
             <h1 className="text-4xl font-bold mb-4 gradient-text">Crea tu propio</h1>
             <div className="tabs">
               <Tabs defaultValue="mirror" className="w-full mb-6">
-                <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 gap-4">
+                <TabsList className="flex flex-col lg:flex-row w-full bg-transparent p-0 gap-4">
                   <TabsTrigger 
                     value="mirror" 
-                    className="data-[state=active]:bg-transparent data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg py-3 rounded-lg border border-border"
+                    className="w-full block data-[state=active]:bg-transparent data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg py-3 px-4 rounded-lg border border-border"
                   >
-                    <h1 className="text-2xl font-bold gradient-text">Espejo infinito</h1>
+                    <h1 className="text-base lg:text-2xl font-bold gradient-text break-words whitespace-normal">Espejo infinito</h1>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="table" 
                     disabled 
-                    className="relative bg-transparent border border-border rounded-lg py-3 opacity-70"
+                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 opacity-70"
                   >
-                    <h1 className="text-2xl font-bold text-muted-foreground">Mesa de centro infinita</h1>
+                    <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Mesa de centro infinita</h1>
+                    <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
+                      ¡Pronto!
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="table" 
+                    disabled 
+                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 opacity-70"
+                  >
+                    <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Espejo inteligente</h1>
                     <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
                       ¡Pronto!
                     </span>

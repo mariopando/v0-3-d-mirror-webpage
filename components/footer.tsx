@@ -9,7 +9,7 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-bold mb-4 gradient-text">Taller Ideas</h3>
             <p className="mb-4 text-muted-foreground leading-relaxed">
-              Creando impresionantes espejos infinitos con materiales premium y tecnología LED de vanguardia.
+              Creando novedosos Espejos - Infinitos con múltiples materiales incluyendo tecnología Led vanguardista
             </p>
             <div className="flex space-x-4">
               <Link href="#" className="text-muted-foreground hover:text-purple-400 transition-colors">

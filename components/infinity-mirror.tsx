@@ -32,6 +32,8 @@ export default function InfinityMirror({
   far,
 }: InfinityMirrorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const [showIcon, setShowIcon] = useState(true)
+  const [fadeOut, setFadeOut] = useState(false)
 
   console.log({ 
   width, 
@@ -49,6 +51,11 @@ export default function InfinityMirror({
   // const [backgroundColor, setBackgroundColor] = useState(1)
   const { theme, setTheme } = useTheme()
   console.log('theme', theme)
+
+  const handleCanvasInteraction = () => {
+    setFadeOut(true)
+    setTimeout(() => setShowIcon(false), 600)
+  }
 
   // Helper function to validate dimensions
   const validateDimension = (value: number, fallback: number = 1) => {
@@ -194,63 +201,55 @@ export default function InfinityMirror({
     }
 
     const getFrameColor = (position: number) => {
-      const loader = new THREE.TextureLoader(); // Correct instantiation
-
-      if (frameColor === "bluehammered") {
-        const texture = loader.load('/206.jpg');
-    
+      const loader = new THREE.TextureLoader();
+      
+      const loadTexture = (texturePath: string) => {
+        const texture = loader.load(texturePath);
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(1, 10); // Repeats the texture 2 times horizontally and 2 times vertically
-
-        // Set texture filtering
+        texture.repeat.set(1, 10);
         texture.minFilter = THREE.LinearMipMapLinearFilter;
         texture.magFilter = THREE.LinearFilter;
-        
-        // Set anisotropy for better quality at angles
         texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-            
-        return new THREE.MeshBasicMaterial({
-              map: texture
-        });
-      } else if (frameColor === "greenhammered") {
-        const texture = loader.load('/uneven-background-texture_1072286-34.jpg');
-    
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(1, 10); // Repeats the texture 2 times horizontally and 2 times vertically
+        return new THREE.MeshBasicMaterial({ map: texture });
+      };
 
-        // Set texture filtering
-        texture.minFilter = THREE.LinearMipMapLinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        
-        // Set anisotropy for better quality at angles
-        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-            
-        return new THREE.MeshBasicMaterial({
-              map: texture
-        });
-      } else {
-        const colorMap: { [key: string]: number } = {
-          white: 0xffffff,
-          blue: 0x0088ff,
-          green: 0x00ff88,
-          yellow: 0xFFE100,
-          purple: 0x850089,
-          pink: 0xFB87FE,
+      switch (frameColor) {
+        case "madera-natural":
+          return loadTexture('/Texturelabs_Wood_267S.jpg');
+        case "martillado-azul":
+          return loadTexture('/206.jpg');
+        case "martillado-verde":
+          return loadTexture('/uneven-background-texture_1072286-34.jpg');
+        case "martillado-cobre":
+          return loadTexture('/133227_header3_small.jpg');
+        default: {
+          const colorMap: { [key: string]: number } = {
+            "madera-barnices": 0xCD853F,
+            "nogal": 0x654321,
+            "caoba": 0x8B4513,
+            "blanco": 0xffffff,
+            "negro": 0x000000,
+            "rojo": 0xDC143C,
+            "azul": 0x0047AB,
+            "verde": 0x228B22,
+            "amarillo": 0xFFD700,
+            "aluminio": 0xC0C0C0,
+          };
+          return new THREE.Color(colorMap[frameColor] || 0xffffff);
         }
-        return new THREE.Color(colorMap[frameColor] || colorMap.pink)
       }
     }
 
     const createFrameScene = () => {
       let frameMaterial = null;
-      if(frameColor === "greenhammered" || frameColor === "bluehammered"){
+      if(frameColor === "madera-natural" || frameColor === "martillado-verde" || frameColor === "martillado-azul" || frameColor === "martillado-cobre"){
         frameMaterial =  getFrameColor(1)
       }
       else{
+        const colorValue = getFrameColor(1);
         frameMaterial = new THREE.MeshBasicMaterial({
-          color: getFrameColor(1),
+          color: colorValue instanceof THREE.Color ? colorValue : 0xffffff,
           opacity: 1,
           transparent: false,
         });
@@ -483,8 +482,89 @@ export default function InfinityMirror({
 
   return (
     <section className="flex flex-col lg:flex-row gap-4 items-center mb-16">
-        <div className="canvas-container">
+        <div className="canvas-container relative" onMouseDown={handleCanvasInteraction} onTouchStart={handleCanvasInteraction}>
           <div ref={containerRef}></div>
+          {showIcon && (
+            <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-600 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
+              <style>{`
+                @keyframes pulse-ring {
+                  0% {
+                    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+                  }
+                  70% {
+                    box-shadow: 0 0 0 30px rgba(168, 85, 247, 0);
+                  }
+                  100% {
+                    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+                  }
+                }
+                
+                @keyframes bounce-touch {
+                  0%, 100% {
+                    transform: scale(1);
+                  }
+                  50% {
+                    transform: scale(1.1);
+                  }
+                }
+                
+                @keyframes rotate-3d {
+                  0% {
+                    transform: rotateX(0deg) rotateY(0deg);
+                  }
+                  100% {
+                    transform: rotateX(360deg) rotateY(360deg);
+                  }
+                }
+                
+                .touch-indicator {
+                  animation: pulse-ring 2s infinite, bounce-touch 1.5s ease-in-out infinite;
+                }
+                
+                .touch-cube {
+                  animation: rotate-3d 4s linear infinite;
+                  perspective: 1000px;
+                }
+                
+                .touch-finger {
+                  animation: bounce-touch 1.5s ease-in-out infinite;
+                }
+              `}</style>
+              
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                {/* Pulsing ring background */}
+                <div className="touch-indicator absolute w-24 h-24 bg-purple-500/20 rounded-full"></div>
+                
+                {/* Main 3D cube representation */}
+                <div className="touch-cube relative w-16 h-16 flex items-center justify-center">
+                  {/* Front face */}
+                  <div className="absolute w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg border-2 border-purple-400" 
+                       style={{ transform: 'translateZ(28px)' }}>
+                    <div className="w-full h-full flex items-center justify-center text-white font-bold text-2xl">
+                      3D
+                    </div>
+                  </div>
+                  {/* Back face */}
+                  <div className="absolute w-14 h-14 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg border-2 border-purple-500" 
+                       style={{ transform: 'translateZ(-28px)' }}>
+                  </div>
+                </div>
+                
+                {/* Touch fingers indicator */}
+                <div className="touch-finger absolute -top-2 -left-2 w-6 h-8 bg-white rounded-full border-2 border-purple-500 flex items-center justify-center">
+                  <div className="w-1 h-1 bg-purple-500 rounded-full"></div>
+                </div>
+                <div className="touch-finger absolute -bottom-2 -right-2 w-6 h-8 bg-white rounded-full border-2 border-purple-500 flex items-center justify-center" style={{ animationDelay: '0.3s' }}>
+                  <div className="w-1 h-1 bg-purple-500 rounded-full"></div>
+                </div>
+                
+                {/* Text below */}
+                <div className="absolute -bottom-12 text-center">
+                  <p className="text-sm font-semibold text-purple-500">Toca para interactuar</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
   )
