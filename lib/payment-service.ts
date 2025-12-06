@@ -1,7 +1,23 @@
 // Direct Next.js Payment Service Integration
 // Supports Transbank (Webpay Plus) and Mercado Pago payment processing
+// 
+// NOTE: This file should only be imported on the server-side
+// For client-side payment operations, use lib/payment-client.ts
 
-import crypto from 'crypto'
+'use server'
+
+// Browser-compatible UUID generator
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  // Fallback for browsers that don't support randomUUID
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
 
 export interface PaymentInitializeRequest {
   amount: number
@@ -40,12 +56,12 @@ export interface PaymentStatusResponse {
 
 const TRANSBANK_CONFIG = {
   commerceCode: process.env.TRANSBANK_COMMERCE_CODE || '597055555532',
-  apiKey: process.env.TRANSBANK_API_KEY || '579B532A7440BB0C9170D10D8E3CAC2638144F42',
+  apiKey: process.env.TRANSBANK_API_KEY || '579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C',
   environment: (process.env.TRANSBANK_ENVIRONMENT || 'test') as 'test' | 'production',
   getApiUrl: function() {
     return this.environment === 'production'
-      ? 'https://webpay3g.transbank.cl/webpayserver'
-      : 'https://webpay3gint.transbank.cl/webpayserver'
+      ? 'https://webpay3g.transbank.cl'
+      : 'https://webpay3gint.transbank.cl'
   }
 }
 
@@ -60,49 +76,50 @@ export async function transbankInitialize(
   try {
     const baseUrl = TRANSBANK_CONFIG.getApiUrl()
     
-    // Create the request signature
+    // Create the request payload according to Transbank API v1.2
     const requestData = {
       buy_order: paymentData.orderId,
-      session_id: crypto.randomUUID(),
+      session_id: generateUUID(),
       amount: Math.round(paymentData.amount),
-      return_url: paymentData.returnUrl,
-      commerce_code: TRANSBANK_CONFIG.commerceCode
+      return_url: paymentData.returnUrl
     }
 
-    // Build the request string for signing
-    const requestString = `${requestData.buy_order}${requestData.session_id}${requestData.amount}${requestData.return_url}`
-    const signature = crypto
-      .createHmac('sha256', TRANSBANK_CONFIG.apiKey)
-      .update(requestString)
-      .digest('hex')
-
-    const response = await fetch(`${baseUrl}/wsInitTransaction`, {
+    console.log('Transbank Request:', {
+      url: `${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions`,
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Tbk-Api-Key-Id': TRANSBANK_CONFIG.commerceCode,
+        'Tbk-Api-Key-Secret': TRANSBANK_CONFIG.apiKey,
+        'Content-Type': 'application/json'
       },
-      body: new URLSearchParams({
-        commerce_code: TRANSBANK_CONFIG.commerceCode,
-        buy_order: requestData.buy_order,
-        session_id: requestData.session_id,
-        amount: requestData.amount.toString(),
-        return_url: requestData.return_url,
-        commerce_code_sign: TRANSBANK_CONFIG.commerceCode,
-        signature: signature,
-      }).toString(),
+      body: requestData
     })
 
+    const response = await fetch(`${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions`, {
+      method: 'POST',
+      headers: {
+        'Tbk-Api-Key-Id': TRANSBANK_CONFIG.commerceCode,
+        'Tbk-Api-Key-Secret': TRANSBANK_CONFIG.apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestData),
+    })
+
+    console.log('Transbank Response Status:', response.status, response.statusText)
+
     if (!response.ok) {
-      throw new Error(`Transbank initialization failed: ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('Transbank Error Response:', errorText)
+      throw new Error(`Transbank initialization failed: ${response.statusText} - ${errorText}`)
     }
 
-    const responseData: TransbankInitResponse = await response.json()
+    const responseData = await response.json()
 
     return {
       transactionId: requestData.buy_order,
       provider: 'transbank',
       token: responseData.token,
-      redirectUrl: `${baseUrl}/webpay/initTransaction?token_ws=${responseData.token}`,
+      redirectUrl: responseData.url,
       message: 'Transaction initialized successfully',
       sessionId: requestData.session_id,
     }
@@ -118,15 +135,14 @@ export async function transbankConfirm(
   try {
     const baseUrl = TRANSBANK_CONFIG.getApiUrl()
 
-    const response = await fetch(`${baseUrl}/wsAcknowledge`, {
-      method: 'POST',
+    // According to the documentation, we need to use PUT method
+    const response = await fetch(`${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`, {
+      method: 'PUT',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        commerce_code: TRANSBANK_CONFIG.commerceCode,
-        token_ws: token,
-      }).toString(),
+        'Tbk-Api-Key-Id': TRANSBANK_CONFIG.commerceCode,
+        'Tbk-Api-Key-Secret': TRANSBANK_CONFIG.apiKey,
+        'Content-Type': 'application/json'
+      }
     })
 
     if (!response.ok) {
@@ -138,12 +154,94 @@ export async function transbankConfirm(
     return {
       transactionId: data.buy_order,
       provider: 'transbank',
-      redirectUrl: data.urlRedirection || '',
+      redirectUrl: '',
       message: `Payment ${data.response_code === 0 ? 'authorized' : 'declined'}`,
       authorizationCode: data.authorization_code,
     }
   } catch (error) {
     console.error('Transbank confirmation error:', error)
+    throw error
+  }
+}
+
+export async function transbankGetStatus(
+  token: string
+): Promise<PaymentStatusResponse> {
+  try {
+    const baseUrl = TRANSBANK_CONFIG.getApiUrl()
+
+    const response = await fetch(`${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`, {
+      method: 'GET',
+      headers: {
+        'Tbk-Api-Key-Id': TRANSBANK_CONFIG.commerceCode,
+        'Tbk-Api-Key-Secret': TRANSBANK_CONFIG.apiKey,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to get transaction status: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    // Map Transbank status to our standard status format
+    let status: PaymentStatusResponse['status'] = 'pending';
+    if (data.response_code === 0) {
+      status = data.status === 'AUTHORIZED' ? 'authorized' : 'captured';
+    } else {
+      status = 'declined';
+    }
+
+    return {
+      transactionId: data.buy_order,
+      status: status,
+      amount: data.amount,
+      provider: 'transbank',
+      createdAt: new Date().toISOString(), // Transbank doesn't return timestamps
+      updatedAt: new Date().toISOString(),
+      authorizationCode: data.authorization_code,
+    }
+  } catch (error) {
+    console.error('Get Transbank status error:', error)
+    throw error
+  }
+}
+
+export async function transbankRefund(
+  token: string,
+  amount?: number
+): Promise<PaymentResponse> {
+  try {
+    const baseUrl = TRANSBANK_CONFIG.getApiUrl()
+
+    const requestData = amount ? { amount } : {};
+
+    const response = await fetch(`${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}/refunds`, {
+      method: 'POST',
+      headers: {
+        'Tbk-Api-Key-Id': TRANSBANK_CONFIG.commerceCode,
+        'Tbk-Api-Key-Secret': TRANSBANK_CONFIG.apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestData)
+    })
+
+    if (!response.ok) {
+      throw new Error(`Transbank refund failed: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    return {
+      transactionId: data.buy_order || token,
+      provider: 'transbank',
+      redirectUrl: '',
+      message: 'Refund processed successfully',
+      authorizationCode: data.authorization_code,
+    }
+  } catch (error) {
+    console.error('Transbank refund error:', error)
     throw error
   }
 }
@@ -313,18 +411,23 @@ export async function confirmPayment(
 
 export async function getPaymentStatus(
   transactionId: string,
-  provider: 'transbank' | 'mercado_pago'
+  provider: 'transbank' | 'mercado_pago',
+  token?: string
 ): Promise<PaymentStatusResponse> {
   if (provider === 'mercado_pago') {
     return mercadoPagoGetPaymentStatus(transactionId)
+  } else if (provider === 'transbank' && token) {
+    return transbankGetStatus(token)
   } else {
-    throw new Error(`Status retrieval not yet implemented for ${provider}`)
+    throw new Error(`Status retrieval not implemented for ${provider} or missing token`)
   }
 }
 
 export async function refundPayment(
   transactionId: string,
-  provider: 'transbank' | 'mercado_pago'
+  provider: 'transbank' | 'mercado_pago',
+  token?: string,
+  amount?: number
 ): Promise<PaymentResponse> {
   if (provider === 'mercado_pago') {
     try {
@@ -359,7 +462,9 @@ export async function refundPayment(
       console.error('Mercado Pago refund error:', error)
       throw error
     }
+  } else if (provider === 'transbank' && token) {
+    return transbankRefund(token, amount)
   } else {
-    throw new Error(`Refund not yet implemented for ${provider}`)
+    throw new Error(`Refund not implemented for ${provider} or missing token`)
   }
 }
