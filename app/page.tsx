@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import ProductControls from "@/components/product-controls"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
@@ -19,7 +19,9 @@ export default function Home() {
   const [depth, setDepth] = useState(4)
   const [ledColor, setLedColor] = useState("rainbow")
   const [isClient, setIsClient] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const { addToCart } = useCart()
+  const topRef = useRef<HTMLDivElement>(null)
 
   // New state variables
   const [frameColor, setFrameColor] = useState("madera-natural")
@@ -31,11 +33,40 @@ export default function Home() {
   const [near, setNear] = useState(0.1)
   const [far, setFar] = useState(1000)
 
+  // Custom setters that scroll to top on mobile
+  const handleSetLedColor = (color: string) => {
+    setLedColor(color)
+    if (isMobile) {
+      scrollToTop()
+    }
+  }
 
+  const handleSetFrameColor = (color: string) => {
+    setFrameColor(color)
+    if (isMobile) {
+      scrollToTop()
+    }
+  }
 
-  // Fix hydration issues
+  const scrollToTop = () => {
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  // Fix hydration issues and detect mobile
   useEffect(() => {
-    // setIsClient(true)
+    setIsClient(true)
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile)
+    }
   }, [])
 
   const calculatePrice = () => {
@@ -67,7 +98,7 @@ export default function Home() {
 
       <div className="container mx-auto px-4 py-8">
         <section className="flex flex-col lg:flex-row gap-8 items-center mb-16">
-          <div className="w-full h-full lg:w-1/2">
+          <div ref={topRef} className="w-full h-full lg:w-1/2">
                 <InfinityMirror
                   width={width}
                   height={height}
@@ -81,20 +112,21 @@ export default function Home() {
                 />
           </div>
           <div className="w-full lg:w-1/2">
-            <h1 className="text-4xl font-bold mb-4 gradient-text">Crea tu propio</h1>
-            <div className="tabs">
+            <h1 className="text-4xl font-bold mb-4 gradient-text hidden md:block">Crea tu propio</h1>
+            <h1 className="text-4xl  text-center font-bold mb-4 gradient-text block md:block">Crea tu Espejo Infinito</h1>
+            <div className="tabs hidden md:block">
               <Tabs defaultValue="mirror" className="w-full mb-6">
                 <TabsList className="flex flex-col lg:flex-row w-full bg-transparent p-0 gap-4">
                   <TabsTrigger 
                     value="mirror" 
-                    className="w-full block data-[state=active]:bg-transparent data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg py-3 px-4 rounded-lg border border-border"
+                    className="w-full block data-[state=active]:bg-transparent data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg py-3 px-4 rounded-lg border border-border hidden md:block"
                   >
                     <h1 className="text-base lg:text-2xl font-bold gradient-text break-words whitespace-normal">Espejo infinito</h1>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="table" 
                     disabled 
-                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 opacity-70"
+                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 opacity-70 hidden md:block"
                   >
                     <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Mesa de centro infinita</h1>
                     <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
@@ -104,7 +136,7 @@ export default function Home() {
                   <TabsTrigger 
                     value="table" 
                     disabled 
-                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 opacity-70"
+                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 opacity-70 hidden md:block"
                   >
                     <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Espejo inteligente</h1>
                     <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
@@ -113,7 +145,7 @@ export default function Home() {
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="mirror" className="mt-6">
-                  <p className="text-2xl text-muted-foreground mb-6 leading-relaxed gap-4 text-center">
+                  <p className="text-2xl text-muted-foreground mb-6 leading-relaxed gap-4 text-center hidden md:block">
                     Descubre la experiencia sensorial de nuestros espejos infinitos de edición maestra.
                     Cada pieza es una sinfonía de precisión milimétrica y artesanía experta, elige y personalizalo como quieras!
                   </p>
@@ -133,9 +165,9 @@ export default function Home() {
                 depth={depth}
                 setDepth={setDepth}
                 ledColor={ledColor}
-                setLedColor={setLedColor}
+                setLedColor={handleSetLedColor}
                 frameColor={frameColor}
-                setFrameColor={setFrameColor}
+                setFrameColor={handleSetFrameColor}
                 fov={fov}
                 setFov={setFov}
                 aspect={aspect}

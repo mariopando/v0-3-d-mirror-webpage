@@ -114,12 +114,14 @@ export async function transbankInitialize(
     }
 
     const responseData = await response.json()
+    console.log('Transbank Response Data:', responseData)
 
+    // IMPORTANTE: Usar la URL exacta proporcionada por Transbank sin modificaciones
     return {
       transactionId: requestData.buy_order,
       provider: 'transbank',
       token: responseData.token,
-      redirectUrl: responseData.url,
+      redirectUrl: responseData.url, // Usar exactamente la URL proporcionada por Transbank
       message: 'Transaction initialized successfully',
       sessionId: requestData.session_id,
     }
@@ -135,6 +137,16 @@ export async function transbankConfirm(
   try {
     const baseUrl = TRANSBANK_CONFIG.getApiUrl()
 
+    console.log('Transbank Confirm Request:', {
+      url: `${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`,
+      method: 'PUT',
+      headers: {
+        'Tbk-Api-Key-Id': TRANSBANK_CONFIG.commerceCode,
+        'Tbk-Api-Key-Secret': TRANSBANK_CONFIG.apiKey,
+        'Content-Type': 'application/json'
+      }
+    })
+
     // According to the documentation, we need to use PUT method
     const response = await fetch(`${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`, {
       method: 'PUT',
@@ -146,10 +158,13 @@ export async function transbankConfirm(
     })
 
     if (!response.ok) {
-      throw new Error(`Transbank confirmation failed: ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('Transbank Confirm Error Response:', errorText)
+      throw new Error(`Transbank confirmation failed: ${response.statusText} - ${errorText}`)
     }
 
     const data = await response.json()
+    console.log('Transbank Confirm Response:', data)
 
     return {
       transactionId: data.buy_order,
@@ -170,6 +185,16 @@ export async function transbankGetStatus(
   try {
     const baseUrl = TRANSBANK_CONFIG.getApiUrl()
 
+    console.log('Transbank Get Status Request:', {
+      url: `${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`,
+      method: 'GET',
+      headers: {
+        'Tbk-Api-Key-Id': TRANSBANK_CONFIG.commerceCode,
+        'Tbk-Api-Key-Secret': TRANSBANK_CONFIG.apiKey,
+        'Content-Type': 'application/json'
+      }
+    })
+
     const response = await fetch(`${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`, {
       method: 'GET',
       headers: {
@@ -180,10 +205,13 @@ export async function transbankGetStatus(
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to get transaction status: ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('Transbank Get Status Error Response:', errorText)
+      throw new Error(`Failed to get transaction status: ${response.statusText} - ${errorText}`)
     }
 
     const data = await response.json()
+    console.log('Transbank Get Status Response:', data)
 
     // Map Transbank status to our standard status format
     let status: PaymentStatusResponse['status'] = 'pending';
@@ -217,6 +245,17 @@ export async function transbankRefund(
 
     const requestData = amount ? { amount } : {};
 
+    console.log('Transbank Refund Request:', {
+      url: `${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}/refunds`,
+      method: 'POST',
+      headers: {
+        'Tbk-Api-Key-Id': TRANSBANK_CONFIG.commerceCode,
+        'Tbk-Api-Key-Secret': TRANSBANK_CONFIG.apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: requestData
+    })
+
     const response = await fetch(`${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}/refunds`, {
       method: 'POST',
       headers: {
@@ -228,10 +267,13 @@ export async function transbankRefund(
     })
 
     if (!response.ok) {
-      throw new Error(`Transbank refund failed: ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('Transbank Refund Error Response:', errorText)
+      throw new Error(`Transbank refund failed: ${response.statusText} - ${errorText}`)
     }
 
     const data = await response.json()
+    console.log('Transbank Refund Response:', data)
 
     return {
       transactionId: data.buy_order || token,
