@@ -14,14 +14,60 @@ export default function Navbar() {
   const totalItems = items.reduce((total, item) => total + item.quantity, 0)
 
   return (
-    <header className="bg-background border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-background/95">
+    <header className="bg-transparent border-b border-border sticky top-0 z-50 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center">
-          <Link
-            href="/"
-            className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-transparent bg-clip-text"
-          >
-            Taller Digital
+          <Link href="/">
+            <div className="brand-name">
+              <div className="cosmic" style={{ "--color": "#23b1d8", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="A">
+                <span>A</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#dc5fe2", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="r">
+                <span>r</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#b733f9", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="t">
+                <span>t</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#a0de59", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="e">
+                <span>e</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#83d1ad", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="s">
+                <span>s</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#f7b500", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="a">
+                <span>a</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#ff6b9d", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="n">
+                <span>n</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#c44a8b", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="o">
+                <span>o</span>
+              </div>
+              <div className="cosmic space" style={{ "--color": "#23b1d8", "--size": "40px", "--font-size": "28px", "padding": "0 5px" } as React.CSSProperties} data-text=" ">
+                <span> </span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#dc5fe2", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="D">
+                <span>D</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#b733f9", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="i">
+                <span>i</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#a0de59", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="g">
+                <span>g</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#83d1ad", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="i">
+                <span>i</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#f7b500", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="t">
+                <span>t</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#ff6b9d", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="a">
+                <span>a</span>
+              </div>
+              <div className="cosmic" style={{ "--color": "#c44a8b", "--size": "40px", "--font-size": "28px" } as React.CSSProperties} data-text="l">
+                <span>l</span>
+              </div>
+            </div>
           </Link>
         </div>
 
@@ -53,11 +99,6 @@ export default function Navbar() {
           <div className="hidden sm:block">
             <ThemeToggle />
           </div>
-          <Link href="/usuario">
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-            </Button>
-          </Link>
           <Link href="/carrito">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />

@@ -84,18 +84,18 @@ export async function transbankInitialize(
       return_url: paymentData.returnUrl
     }
 
-    console.log('Transbank Request:', {
-      url: `${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions`,
+    const endpoint = `${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions`
+    
+    console.log('Transbank Initialize Request:', {
+      endpoint,
       method: 'POST',
-      headers: {
-        'Tbk-Api-Key-Id': TRANSBANK_CONFIG.commerceCode,
-        'Tbk-Api-Key-Secret': TRANSBANK_CONFIG.apiKey,
-        'Content-Type': 'application/json'
-      },
+      commerceCode: TRANSBANK_CONFIG.commerceCode,
+      apiKeyLength: TRANSBANK_CONFIG.apiKey.length,
+      environment: TRANSBANK_CONFIG.environment,
       body: requestData
     })
 
-    const response = await fetch(`${baseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions`, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Tbk-Api-Key-Id': TRANSBANK_CONFIG.commerceCode,
@@ -105,12 +105,21 @@ export async function transbankInitialize(
       body: JSON.stringify(requestData),
     })
 
-    console.log('Transbank Response Status:', response.status, response.statusText)
+    console.log('Transbank Response Status:', {
+      status: response.status,
+      statusText: response.statusText,
+      endpoint
+    })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Transbank Error Response:', errorText)
-      throw new Error(`Transbank initialization failed: ${response.statusText} - ${errorText}`)
+      console.error('Transbank Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText.substring(0, 500),
+        endpoint
+      })
+      throw new Error(`Transbank initialization failed: ${response.status} ${response.statusText}`)
     }
 
     const responseData = await response.json()

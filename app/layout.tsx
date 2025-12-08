@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
+import RainbowBackground from "@/components/rainbow-background"
 import { CartProvider } from "@/context/cart-context"
 import { Toaster } from "@/components/ui/toaster"
 import Script from "next/script"
@@ -12,7 +13,7 @@ import Script from "next/script"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Taller Digital | Espejos Infinitos LED Personalizados",
+  title: "Artesano Digital | Espejos Infinitos LED Personalizados",
   description:
     "Espejos infinitos premium con iluminación LED. Crea tu propio espejo infinito único con dimensiones y colores LED ajustables.",
   generator: "v0.dev",
@@ -40,7 +41,8 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <CartProvider>
-            <div className="min-h-screen bg-background text-foreground">
+            <RainbowBackground />
+            <div className="relative z-10 min-h-screen text-foreground">
               {children}
             </div>
             <Toaster />

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import ProductControls from "@/components/product-controls"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
@@ -14,12 +15,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { InfoIcon } from "lucide-react"
 
 export default function Home() {
+  const router = useRouter()
   const [width, setWidth] = useState(40)
   const [height, setHeight] = useState(50)
   const [depth, setDepth] = useState(4)
   const [ledColor, setLedColor] = useState("rainbow")
   const [isClient, setIsClient] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [isAddedToCart, setIsAddedToCart] = useState(false)
   const { addToCart } = useCart()
   const topRef = useRef<HTMLDivElement>(null)
 
@@ -56,7 +59,7 @@ export default function Home() {
 
   // Fix hydration issues and detect mobile
   useEffect(() => {
-    setIsClient(true)
+    // setIsClient(true)
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
@@ -90,15 +93,16 @@ export default function Home() {
     }
 
     addToCart(product)
+    setIsAddedToCart(true)
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen text-foreground">
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <section className="flex flex-col lg:flex-row gap-8 items-center mb-16">
-          <div ref={topRef} className="w-full h-full lg:w-1/2">
+        <section className="flex flex-col lg:flex-row gap-8 items-center">
+          <div ref={topRef} className="w-full lg:w-1/2">
                 <InfinityMirror
                   width={width}
                   height={height}
@@ -112,8 +116,8 @@ export default function Home() {
                 />
           </div>
           <div className="w-full lg:w-1/2">
+            <h1 className="text-4xl text-center font-bold mb-4 gradient-text block md:hidden">Crea tu Espejo Infinito</h1>
             <h1 className="text-4xl font-bold mb-4 gradient-text hidden md:block">Crea tu propio</h1>
-            <h1 className="text-4xl  text-center font-bold mb-4 gradient-text block md:block">Crea tu Espejo Infinito</h1>
             <div className="tabs hidden md:block">
               <Tabs defaultValue="mirror" className="w-full mb-6">
                 <TabsList className="flex flex-col lg:flex-row w-full bg-transparent p-0 gap-4">
@@ -180,13 +184,28 @@ export default function Home() {
 
               <div className="mt-6 flex flex-col sm:flex-row gap-4">
                 <div className="text-2xl font-bold text-primary">{formatCurrency(calculatePrice())}</div>
-                <Button
-                  onClick={handleAddToCart}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-                >
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  Agregar al Carrito
-                </Button>
+                {!isAddedToCart ? (
+                  <Button
+                    onClick={handleAddToCart}
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                    style={{
+                      animation: 'fadeIn 0.3s ease-in-out',
+                    }}
+                  >
+                    <ShoppingCart className="mr-2 h-5 w-5" />
+                    Agregar al Carrito
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => router.push('/carrito')}
+                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                    style={{
+                      animation: 'fadeIn 0.3s ease-in-out',
+                    }}
+                  >
+                    Ir a pagar
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -220,7 +239,6 @@ export default function Home() {
                                 : ""}
                 </li>
                 <li>Alimentación por USB</li>
-                <li>1 año de garantía</li>
                 <li>Despacho a todo Chile, en 48 horas para productos prefabricados y de 6 a 12 días para productos personalizados</li>
               </ul>
             </div>
