@@ -34,23 +34,12 @@ export default function InfinityMirror({
   const containerRef = useRef<HTMLDivElement>(null)
   const [showIcon, setShowIcon] = useState(true)
   const [fadeOut, setFadeOut] = useState(false)
+  
+  // Create a single TextureLoader instance at component level to avoid duplication
+  const textureLoaderRef = useRef<THREE.TextureLoader | null>(null)
+  const textureCache = useRef<Map<string, THREE.Texture>>(new Map())
 
-  console.log({ 
-  width, 
-  height, 
-  depth, 
-  ledColor,
-  frameColor,
-  fov,
-  aspect,
-  near,
-  far,
-})
-
-    // Background color state
-  // const [backgroundColor, setBackgroundColor] = useState(1)
-  const { theme, setTheme } = useTheme()
-  console.log('theme', theme)
+  const { theme } = useTheme()
 
   const handleCanvasInteraction = () => {
     setFadeOut(true)
@@ -65,13 +54,16 @@ export default function InfinityMirror({
   const widthUnits = validateDimension(width / 10)
   const heightUnits = validateDimension(height / 10)
   const depthUnits = validateDimension(depth / 10)
-  const backgroundColor = theme === 'dark' ? '#020817' : '#FFFFFF';
+  const backgroundColor = theme === 'dark' ? 'rgba(2, 8, 23, 0.6)' : 'rgba(255, 255, 255, 0.6)';
 
   useEffect(() => {
     if (!containerRef.current) return
 
-    while (containerRef.current.firstChild) {
-      containerRef.current.removeChild(containerRef.current.firstChild)
+    // Store current ref value for use in cleanup function
+    const container = containerRef.current
+
+    while (container.firstChild) {
+      container.removeChild(container.firstChild)
     }
 
     const scene = new THREE.Scene()
@@ -89,7 +81,17 @@ export default function InfinityMirror({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
-    containerRef.current.appendChild(renderer.domElement)
+    container.appendChild(renderer.domElement)
+
+    // Track resources for proper cleanup
+    const resourcesForCleanup = {
+      geometries: [] as THREE.BufferGeometry[],
+      materials: [] as THREE.Material[],
+      textures: [] as THREE.Texture[],
+    }
+
+    // Material cache to reuse materials instead of creating duplicates
+    const materialCache = new Map<string, THREE.Material>()
 
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
@@ -123,47 +125,58 @@ export default function InfinityMirror({
         color: '#000000',
         side: THREE.FrontSide
       })
+      resourcesForCleanup.materials.push(frameInnerSideMaterial)
 
       const frameOutsideMaterial = new THREE.MeshBasicMaterial({
-        color: backgroundColor,
+        color: 0x020817,
         side: THREE.BackSide
       });
+      resourcesForCleanup.materials.push(frameOutsideMaterial)
 
       const frameSides: THREE.Mesh[] = []
 
       // Top frame piece
       const topGeometry = new THREE.BoxGeometry(widthUnits, 0.005, 3)
+      resourcesForCleanup.geometries.push(topGeometry)
       let topFrame = new THREE.Mesh(topGeometry, frameInnerSideMaterial)
       topFrame.position.y = heightUnits / 2
       topFrame.position.x = 0
       topFrame.position.z =  0
 
       frameSides.push(topFrame)
-      topFrame = new THREE.Mesh(topGeometry, frameOutsideMaterial)
+      const topGeometry2 = new THREE.BoxGeometry(widthUnits, 0.005, 3)
+      resourcesForCleanup.geometries.push(topGeometry2)
+      topFrame = new THREE.Mesh(topGeometry2, frameOutsideMaterial)
       topFrame.position.y = heightUnits / 1.99
       topFrame.position.z = heightUnits * 0.0001
       frameSides.push(topFrame)
 
       // Bottom frame piece
       const bottomGeometry = new THREE.BoxGeometry(widthUnits, 0.005, 3)
+      resourcesForCleanup.geometries.push(bottomGeometry)
       let bottomFrame = new THREE.Mesh(bottomGeometry, frameInnerSideMaterial)
       bottomFrame.position.y = -heightUnits / 1.99
       bottomFrame.position.z = 0
 
       frameSides.push(bottomFrame)
-      bottomFrame = new THREE.Mesh(bottomGeometry, frameOutsideMaterial)
+      const bottomGeometry2 = new THREE.BoxGeometry(widthUnits, 0.005, 3)
+      resourcesForCleanup.geometries.push(bottomGeometry2)
+      bottomFrame = new THREE.Mesh(bottomGeometry2, frameOutsideMaterial)
       bottomFrame.position.y = -heightUnits / 1.985
       bottomFrame.position.z = 0
       frameSides.push(bottomFrame)
 
       // Left frame piece
       const leftGeometry = new THREE.BoxGeometry(0.005, heightUnits, 3)
+      resourcesForCleanup.geometries.push(leftGeometry)
       let leftFrame = new THREE.Mesh(leftGeometry, frameInnerSideMaterial)
       leftFrame.position.x = -widthUnits / 2
       leftFrame.position.z = 0
 
       frameSides.push(leftFrame)
-      leftFrame = new THREE.Mesh(leftGeometry, frameOutsideMaterial)
+      const leftGeometry2 = new THREE.BoxGeometry(0.005, heightUnits, 3)
+      resourcesForCleanup.geometries.push(leftGeometry2)
+      leftFrame = new THREE.Mesh(leftGeometry2, frameOutsideMaterial)
       leftFrame.position.y = 0
       leftFrame.position.x = -widthUnits / 1.985
       leftFrame.position.z = 0 / 2
@@ -171,24 +184,30 @@ export default function InfinityMirror({
 
       // Right frame piece
       const rightGeometry = new THREE.BoxGeometry(0.005, heightUnits, 3)
+      resourcesForCleanup.geometries.push(rightGeometry)
       let rightFrame = new THREE.Mesh(rightGeometry, frameInnerSideMaterial)
       rightFrame.position.x = widthUnits / 2
       rightFrame.position.z = 0
 
       frameSides.push(rightFrame)
-      rightFrame = new THREE.Mesh(leftGeometry, frameOutsideMaterial)
+      const rightGeometry2 = new THREE.BoxGeometry(0.005, heightUnits, 3)
+      resourcesForCleanup.geometries.push(rightGeometry2)
+      rightFrame = new THREE.Mesh(rightGeometry2, frameOutsideMaterial)
       rightFrame.position.x = widthUnits / 1.985
       rightFrame.position.z = 0
       frameSides.push(rightFrame)
 
       // background frame piece
       const aboveGeometry = new THREE.BoxGeometry(widthUnits, heightUnits, 0.005)
+      resourcesForCleanup.geometries.push(aboveGeometry)
       let aboveFrame = new THREE.Mesh(aboveGeometry, frameInnerSideMaterial)
       aboveFrame.position.y = 0
       aboveFrame.position.z = -1.5
 
       frameSides.push(aboveFrame)
-      aboveFrame = new THREE.Mesh(aboveGeometry, frameOutsideMaterial)
+      const aboveGeometry2 = new THREE.BoxGeometry(widthUnits, heightUnits, 0.005)
+      resourcesForCleanup.geometries.push(aboveGeometry2)
+      aboveFrame = new THREE.Mesh(aboveGeometry2, frameOutsideMaterial)
       aboveFrame.position.y = 0
       aboveFrame.position.z = -1.55
       frameSides.push(aboveFrame)
@@ -201,28 +220,47 @@ export default function InfinityMirror({
     }
 
     const getFrameColor = (position: number) => {
-      const loader = new THREE.TextureLoader();
+      // Initialize TextureLoader only once
+      if (!textureLoaderRef.current) {
+        textureLoaderRef.current = new THREE.TextureLoader()
+      }
+      
+      const loader = textureLoaderRef.current
       
       const loadTexture = (texturePath: string) => {
-        const texture = loader.load(texturePath);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(1, 10);
-        texture.minFilter = THREE.LinearMipMapLinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-        return new THREE.MeshBasicMaterial({ map: texture });
-      };
+        // Check cache first
+        if (textureCache.current.has(texturePath)) {
+          const cachedTexture = textureCache.current.get(texturePath)!
+          return new THREE.MeshBasicMaterial({ map: cachedTexture })
+        }
+        
+        // Load texture if not in cache
+        const texture = loader.load(texturePath)
+        texture.wrapS = THREE.RepeatWrapping
+        texture.wrapT = THREE.RepeatWrapping
+        texture.repeat.set(1, 10)
+        texture.minFilter = THREE.LinearMipMapLinearFilter
+        texture.magFilter = THREE.LinearFilter
+        texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
+        
+        // Store in cache
+        textureCache.current.set(texturePath, texture)
+        
+        // Track for cleanup
+        resourcesForCleanup.textures.push(texture)
+        
+        return new THREE.MeshBasicMaterial({ map: texture })
+      }
 
       switch (frameColor) {
         case "madera-natural":
-          return loadTexture('/Texturelabs_Wood_267S.jpg');
+          return loadTexture('/Texturelabs_Wood_267S.jpg')
         case "martillado-azul":
-          return loadTexture('/206.jpg');
+          return loadTexture('/206.jpg')
         case "martillado-verde":
-          return loadTexture('/uneven-background-texture_1072286-34.jpg');
+          return loadTexture('/uneven-background-texture_1072286-34.jpg')
         case "martillado-cobre":
-          return loadTexture('/133227_header3_small.jpg');
+          return loadTexture('/133227_header3_small.jpg')
         default: {
           const colorMap: { [key: string]: number } = {
             "madera-barnices": 0xCD853F,
@@ -235,62 +273,69 @@ export default function InfinityMirror({
             "verde": 0x228B22,
             "amarillo": 0xFFD700,
             "aluminio": 0xC0C0C0,
-          };
-          return new THREE.Color(colorMap[frameColor] || 0xffffff);
+          }
+          const material = new THREE.MeshBasicMaterial({
+            color: colorMap[frameColor] || 0xffffff,
+            opacity: 1,
+            transparent: false,
+          })
+          resourcesForCleanup.materials.push(material)
+          return material
         }
       }
     }
 
     const createFrameScene = () => {
-      let frameMaterial = null;
-      if(frameColor === "madera-natural" || frameColor === "martillado-verde" || frameColor === "martillado-azul" || frameColor === "martillado-cobre"){
-        frameMaterial =  getFrameColor(1)
-      }
-      else{
-        const colorValue = getFrameColor(1);
-        frameMaterial = new THREE.MeshBasicMaterial({
-          color: colorValue instanceof THREE.Color ? colorValue : 0xffffff,
-          opacity: 1,
-          transparent: false,
-        });
+      const frameMaterial = getFrameColor(1) as THREE.MeshBasicMaterial
+      
+      if (frameMaterial instanceof THREE.Material) {
+        resourcesForCleanup.materials.push(frameMaterial)
       }
 
-      const frameSides: THREE.Mesh[] = []
+      // OPTIMIZATION: Use single InstancedMesh instead of 4 individual meshes
+      // Reduces draw calls from 4 to 1, batching all frame geometry
+      const geometry = new THREE.BoxGeometry(1, 1, depthUnits)
+      resourcesForCleanup.geometries.push(geometry)
+      const instancedMesh = new THREE.InstancedMesh(geometry, frameMaterial, 4)
+      
+      const matrix = new THREE.Matrix4()
+      
+      // Top frame (scale: widthUnits x 0.05 x depthUnits, position: 0, heightUnits/2, 1.6)
+      matrix.compose(
+        new THREE.Vector3(0, heightUnits / 2, 1.6),
+        new THREE.Quaternion(),
+        new THREE.Vector3(widthUnits, 0.05, 1)
+      )
+      instancedMesh.setMatrixAt(0, matrix)
+      
+      // Bottom frame (scale: widthUnits x 0.05 x depthUnits, position: 0, -heightUnits/2, 1.6)
+      matrix.compose(
+        new THREE.Vector3(0, -heightUnits / 2, 1.6),
+        new THREE.Quaternion(),
+        new THREE.Vector3(widthUnits, 0.05, 1)
+      )
+      instancedMesh.setMatrixAt(1, matrix)
+      
+      // Left frame (scale: 0.05 x heightUnits x depthUnits, position: -widthUnits/2, 0, 1.6)
+      matrix.compose(
+        new THREE.Vector3(-widthUnits / 2, 0, 1.6),
+        new THREE.Quaternion(),
+        new THREE.Vector3(0.05, heightUnits, 1)
+      )
+      instancedMesh.setMatrixAt(2, matrix)
+      
+      // Right frame (scale: 0.05 x heightUnits x depthUnits, position: widthUnits/2, 0, 1.6)
+      matrix.compose(
+        new THREE.Vector3(widthUnits / 2, 0, 1.6),
+        new THREE.Quaternion(),
+        new THREE.Vector3(0.05, heightUnits, 1)
+      )
+      instancedMesh.setMatrixAt(3, matrix)
+      
+      instancedMesh.instanceMatrix.needsUpdate = true
+      scene.add(instancedMesh)
 
-      // Top frame piece
-      const topGeometry = new THREE.BoxGeometry(widthUnits, 0.05, depthUnits)
-      const topFrame = new THREE.Mesh(topGeometry, frameMaterial)
-      topFrame.position.y = heightUnits / 2
-      topFrame.position.z = 1.6
-
-      frameSides.push(topFrame)
-
-      // Bottom frame piece
-      const bottomGeometry = new THREE.BoxGeometry(widthUnits, 0.05, depthUnits)
-      const bottomFrame = new THREE.Mesh(bottomGeometry, frameMaterial)
-      bottomFrame.position.y = -heightUnits / 2
-      bottomFrame.position.z = 1.6
-      frameSides.push(bottomFrame)
-
-      // Left frame piece
-      const leftGeometry = new THREE.BoxGeometry(0.05, heightUnits, depthUnits)
-      const leftFrame = new THREE.Mesh(leftGeometry, frameMaterial)
-      leftFrame.position.x = -widthUnits / 2
-      leftFrame.position.z = 1.6
-
-      frameSides.push(leftFrame)
-
-      // Right frame piece
-      const rightGeometry = new THREE.BoxGeometry(0.05, heightUnits, depthUnits)
-      const rightFrame = new THREE.Mesh(rightGeometry, frameMaterial)
-      rightFrame.position.x = widthUnits / 2
-      rightFrame.position.z = 1.6
-      frameSides.push(rightFrame)
-
-      // Add all frame pieces to the scene
-      frameSides.forEach(side => scene.add(side))
-
-      return frameSides
+      return instancedMesh
     }
 
     const createSurfaceMirrorScene = () => {
@@ -298,24 +343,131 @@ export default function InfinityMirror({
         widthUnits,
         heightUnits
       )
-      const mirrorMaterial = new THREE.MeshStandardMaterial({
+      resourcesForCleanup.geometries.push(mirrorGeometry)
+      // OPTIMIZATION: Use MeshBasicMaterial instead of MeshStandardMaterial
+      // MeshBasicMaterial is much faster as it doesn't require complex lighting calculations
+      const mirrorMaterial = new THREE.MeshBasicMaterial({
         color: 0xFFFFFF,
-        opacity: 0.3,
+        opacity: 0.1,
         transparent: true,
-        transmission: 0.9,  // Amount of light passing through
-        reflectivity: 0.7,    // Reflectivity (0 to 1)
-        ior: 1.5,            // Index of Refraction
-        envMapIntensity: 0.9, // Environment map intensity
-        roughness: 0.1,     // Low roughness for a smooth glass look
-        metalness: 1,       // Non-metallic material
-        clearcoat: 1,        // Simulates a thin clear coat layer
       })
+      resourcesForCleanup.materials.push(mirrorMaterial)
       const mirror = new THREE.Mesh(mirrorGeometry, mirrorMaterial)
       mirror.position.z = 1.6
       scene.add(mirror)
     }
 
     const numLeds = 10
+
+    // Data structure to store LED information for instancing and animation
+    interface LedData {
+      position: THREE.Vector3
+      color: THREE.Color
+      depthIndex: number
+      baseIntensity: number
+      pulseAmount: number
+    }
+    const ledDataArray: LedData[] = []
+    const ledMeshMap = new Map<string, { mesh: THREE.Mesh; instances: number[] }>()
+
+    // Shared uniforms for all shader materials (updated once per frame)
+    const shaderUniforms = {
+      time: { value: 0 },
+      numLeds: { value: numLeds },
+      animationMode: { value: 0 }, // 0: pulse, 1: strobe, 2: waves, 3: rainbow, 4: breathing
+    }
+
+    // Helper function to create GPU-accelerated material with built-in animation
+    const createGpuAnimatedMaterial = (
+      color: THREE.Color,
+      baseIntensity: number,
+      pulseAmount: number,
+      opacity: number
+    ): THREE.ShaderMaterial => {
+      // Fragment shader with 4 different animation effects
+      const fragmentShader = `
+        uniform float time;
+        uniform float baseIntensity;
+        uniform float pulseAmount;
+        uniform int animationMode;
+        varying vec3 vColor;
+        
+        void main() {
+          float intensity = baseIntensity;
+          
+          // Effect 0: Classic Pulse (smooth sine wave)
+          if (animationMode == 0) {
+            float pulse = sin(time * 2.0) * pulseAmount;
+            intensity = baseIntensity * (1.0 + pulse);
+          }
+          // Effect 1: Strobe (rapid on/off flashing)
+          else if (animationMode == 1) {
+            float strobeFreq = 4.0;
+            float strobe = step(0.5, mod(time * strobeFreq, 1.0));
+            intensity = baseIntensity * (0.3 + strobe * 0.7);
+          }
+          // Effect 2: Waves (traveling wave pattern)
+          else if (animationMode == 2) {
+            float waveFreq = 3.0;
+            float wave = sin(time * waveFreq * 2.0 + gl_FragCoord.y * 0.1) * 0.5 + 0.5;
+            intensity = baseIntensity * (0.4 + wave * 0.6);
+          }
+          // Effect 3: Rainbow Breathing (pulsing with varied intensity)
+          else if (animationMode == 3) {
+            float breathe = sin(time * 1.5) * 0.3 + 0.7;
+            float colorShift = sin(time * 0.5) * 0.5 + 0.5;
+            intensity = baseIntensity * breathe;
+          }
+          // Effect 4: Double Pulse (two peaks per cycle)
+          else {
+            float doublePulse = abs(sin(time * 4.0)) * pulseAmount;
+            intensity = baseIntensity * (0.6 + doublePulse * 0.4);
+          }
+          
+          gl_FragColor = vec4(vColor * intensity, ${opacity});
+        }
+      `
+      
+      const vertexShader = `
+        varying vec3 vColor;
+        
+        void main() {
+          vColor = vec3(${color.r}, ${color.g}, ${color.b});
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `
+
+      return new THREE.ShaderMaterial({
+        uniforms: {
+          time: shaderUniforms.time,
+          baseIntensity: { value: baseIntensity },
+          pulseAmount: { value: pulseAmount },
+          animationMode: shaderUniforms.animationMode,
+        },
+        vertexShader,
+        fragmentShader,
+        transparent: true,
+        side: THREE.FrontSide,
+      })
+    }
+
+    // Helper function to get or create cached materials
+    const getCachedMaterial = (
+      color: THREE.Color,
+      emissiveIntensity: number,
+      opacity: number,
+      cacheKey: string
+    ): THREE.Material => {
+      if (materialCache.has(cacheKey)) {
+        return materialCache.get(cacheKey)!
+      }
+
+      // OPTIMIZATION: Use GPU-accelerated shader material instead of updating CPU every frame
+      const material = createGpuAnimatedMaterial(color, emissiveIntensity, 0.5, opacity)
+      materialCache.set(cacheKey, material)
+      resourcesForCleanup.materials.push(material)
+      return material
+    }
 
     const createLedsScene = () => {
     const ledSize = 0.05
@@ -344,24 +496,21 @@ export default function InfinityMirror({
           ledSize,
           0.05
         )
+        resourcesForCleanup.geometries.push(ledGeometry)
         const color = getLedColor(position)
-        const ledMaterial = new THREE.MeshStandardMaterial({
-          color: 0x000000,
-          emissive: color,
-          emissiveIntensity: 2,
-          transparent: true,
-          opacity: 0.1,
-        })
+        
+        // Use cached material instead of creating a new one
+        const cacheKey = `led-${color.getHexString()}-base`
+        const ledMaterial = getCachedMaterial(color, 2, 0.1, cacheKey)
+        
         const led = new THREE.Mesh(ledGeometry, ledMaterial)
         // Position LED considering frame width
        led.position.set(x, y, depth / 2 + 0.01)
 
-        // scene.add(led)
-        // leds.push(led)
-        createInfiniteEffect(x, y, position)
+        createInfiniteEffect(x, y, position, leds)
       }
 
-    const createInfiniteEffect = (x: number, y: number, position: number) => {
+    const createInfiniteEffect = (x: number, y: number, position: number, ledsArray: THREE.Mesh[]) => {
       // OPTIMIZATION: Reduce the number of points for better performance
       const maxDepth = 15
       const numPoints = 8 // Reduced from 10
@@ -376,21 +525,30 @@ export default function InfinityMirror({
         const scaledY = y * scale
 
         const pointGeometry = new THREE.BoxGeometry(ledSize * 0.8, ledSize * 0.8, 0.02)
+        resourcesForCleanup.geometries.push(pointGeometry)
         const color = getLedColor(position)
 
-        // Use emissive material for the receding points too
-        const pointMaterial = new THREE.MeshStandardMaterial({
-          color: 0x000000,
-          emissive: color,
-          emissiveIntensity: 1.5 * (1 - (i / numPoints) * 0.7),
-          transparent: true,
-          opacity: 1 - (i / numPoints) * 0.7,
-        })
+        // Calculate opacity and intensity based on depth
+        const opacityFactor = 1 - (i / numPoints) * 0.7
+        const intensityFactor = 1.5 * (1 - (i / numPoints) * 0.7)
+        
+        // Use cached material with a depth-based cache key
+        const cacheKey = `led-${color.getHexString()}-depth-${i}`
+        const pointMaterial = getCachedMaterial(color, intensityFactor, opacityFactor, cacheKey)
 
         const point = new THREE.Mesh(pointGeometry, pointMaterial)
         point.position.set(scaledX, scaledY, z)
         scene.add(point)
-        leds.push(point)
+        ledsArray.push(point)
+        
+        // OPTIMIZATION: Track LED data for animation updates
+        ledDataArray.push({
+          position: new THREE.Vector3(scaledX, scaledY, z),
+          color: color.clone(),
+          depthIndex: i,
+          baseIntensity: i < numLeds * 4 ? 2 : 1.5 * (1 - (Math.floor(i / (numLeds * 4)) / 8) * 0.7),
+          pulseAmount: i < numLeds * 4 ? 0.5 : 0.3,
+        })
       }
     }
 
@@ -453,20 +611,16 @@ export default function InfinityMirror({
       controls.update()
 
       const time = performance.now() * 0.001
-      leds.forEach((led, index) => {
-        const material = led.material as THREE.MeshStandardMaterial
-        if (material.emissiveIntensity !== undefined) {
-          const baseIntensity = index < numLeds * 4 ? 2 : 1.5 * (1 - (Math.floor(index / (numLeds * 4)) / 8) * 0.7)
-          const pulseAmount = index < numLeds * 4 ? 0.5 : 0.3
-          material.emissiveIntensity = baseIntensity * (1 + pulseAmount * Math.sin(time * 2 + index * 0.1))
-
-          // Also modulate the light intensity
-          // if (ledLights[index]) {
-          //   ledLights[index].intensity = 0.5 * (1 + pulseAmount * Math.sin(time * 2 + index * 0.1))
-          // }
-        }
-      })
-
+      
+      // OPTIMIZATION: Update only the shared time uniform (GPU handles animation)
+      // This is much faster than updating 320+ material properties per frame
+      shaderUniforms.time.value = time
+      
+      // Cycle through 4 animation effects every 15 seconds (total cycle = 60 seconds)
+      const cycleTime = time % 60
+      const effectIndex = Math.floor(cycleTime / 15)
+      shaderUniforms.animationMode.value = effectIndex
+      
       renderer.render(scene, camera)
       return animationId
     }
@@ -474,14 +628,74 @@ export default function InfinityMirror({
     const animationId = animate()
 
     return () => {
+      // Cancel animation frame
       cancelAnimationFrame(animationId)
+      
+      // OPTIMIZATION: Defer non-critical cleanup to idle time to avoid frame blocking
+      if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(() => {
+          // Dispose of all geometries
+          resourcesForCleanup.geometries.forEach(geometry => {
+            geometry.dispose()
+          })
+          
+          // Dispose of all materials
+          resourcesForCleanup.materials.forEach(material => {
+            material.dispose()
+          })
+          
+          // Dispose of all textures
+          resourcesForCleanup.textures.forEach(texture => {
+            texture.dispose()
+          })
+          
+          // Clear arrays
+          resourcesForCleanup.geometries.length = 0
+          resourcesForCleanup.materials.length = 0
+          resourcesForCleanup.textures.length = 0
+        })
+      } else {
+        // Fallback for browsers without requestIdleCallback
+        setTimeout(() => {
+          resourcesForCleanup.geometries.forEach(geometry => geometry.dispose())
+          resourcesForCleanup.materials.forEach(material => material.dispose())
+          resourcesForCleanup.textures.forEach(texture => texture.dispose())
+          resourcesForCleanup.geometries.length = 0
+          resourcesForCleanup.materials.length = 0
+          resourcesForCleanup.textures.length = 0
+        }, 0)
+      }
+      
+      // Critical cleanup (must happen immediately)
+      scene.clear()
       renderer.dispose()
       controls.dispose()
+      
+      // Remove canvas from DOM
+      if (renderer.domElement.parentNode === container) {
+        container.removeChild(renderer.domElement)
+      }
     }
   }, [width, height, depth, ledColor, widthUnits, heightUnits, depthUnits, frameColor, fov, aspect, near, far, backgroundColor])
 
+  // Cleanup texture cache and TextureLoader on component unmount
+  useEffect(() => {
+    const cache = textureCache.current
+    
+    return () => {
+      // Dispose all cached textures
+      cache.forEach(texture => {
+        texture.dispose()
+      })
+      cache.clear()
+      
+      // Reset TextureLoader reference
+      textureLoaderRef.current = null
+    }
+  }, [])
+
   return (
-    <section className="flex flex-col lg:flex-row gap-4 items-center mb-16">
+    <section className="flex flex-col lg:flex-row gap-4 items-center">
         <div className="canvas-container relative" onMouseDown={handleCanvasInteraction} onTouchStart={handleCanvasInteraction}>
           <div ref={containerRef}></div>
           {showIcon && (
@@ -532,33 +746,18 @@ export default function InfinityMirror({
               `}</style>
               
               <div className="relative w-32 h-32 flex items-center justify-center">
-                {/* Pulsing ring background */}
-                <div className="touch-indicator absolute w-24 h-24 bg-purple-500/20 rounded-full"></div>
-                
-                {/* Main 3D cube representation */}
                 <div className="touch-cube relative w-16 h-16 flex items-center justify-center">
-                  {/* Front face */}
                   <div className="absolute w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg border-2 border-purple-400" 
                        style={{ transform: 'translateZ(28px)' }}>
                     <div className="w-full h-full flex items-center justify-center text-white font-bold text-2xl">
                       3D
                     </div>
                   </div>
-                  {/* Back face */}
                   <div className="absolute w-14 h-14 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg border-2 border-purple-500" 
                        style={{ transform: 'translateZ(-28px)' }}>
                   </div>
                 </div>
                 
-                {/* Touch fingers indicator */}
-                <div className="touch-finger absolute -top-2 -left-2 w-6 h-8 bg-white rounded-full border-2 border-purple-500 flex items-center justify-center">
-                  <div className="w-1 h-1 bg-purple-500 rounded-full"></div>
-                </div>
-                <div className="touch-finger absolute -bottom-2 -right-2 w-6 h-8 bg-white rounded-full border-2 border-purple-500 flex items-center justify-center" style={{ animationDelay: '0.3s' }}>
-                  <div className="w-1 h-1 bg-purple-500 rounded-full"></div>
-                </div>
-                
-                {/* Text below */}
                 <div className="absolute -bottom-12 text-center">
                   <p className="text-sm font-semibold text-purple-500">Toca para interactuar</p>
                 </div>
