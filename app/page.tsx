@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import ProductControls from "@/components/product-controls"
 import Navbar from "@/components/navbar"
@@ -14,6 +14,15 @@ import InfiniteTable from "@/components/infinite-table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { InfoIcon } from "lucide-react"
+
+// Loading fallback component
+function ComponentLoader() {
+  return (
+    <div className="w-full h-96 flex items-center justify-center">
+      <div className="text-muted-foreground">Cargando componente...</div>
+    </div>
+  )
+}
 
 export default function Home() {
   const router = useRouter()
@@ -105,31 +114,33 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <section className="flex flex-col lg:flex-row gap-8 items-center">
           <div ref={topRef} className="w-full lg:w-1/2">
-                {productType === "mirror" ? (
-                  <InfinityMirror
-                    width={width}
-                    height={height}
-                    depth={depth}
-                    ledColor={ledColor}
-                    frameColor={frameColor}
-                    fov={fov}
-                    aspect={aspect}
-                    near={near}
-                    far={far}
-                  />
-                ) : (
-                  <InfiniteTable
-                    width={width}
-                    height={height}
-                    depth={depth}
-                    ledColor={ledColor}
-                    frameColor={frameColor}
-                    fov={fov}
-                    aspect={aspect}
-                    near={near}
-                    far={far}
-                  />
-                )}
+                <Suspense fallback={<ComponentLoader />}>
+                  {productType === "mirror" ? (
+                    <InfinityMirror
+                      width={width}
+                      height={height}
+                      depth={depth}
+                      ledColor={ledColor}
+                      frameColor={frameColor}
+                      fov={fov}
+                      aspect={aspect}
+                      near={near}
+                      far={far}
+                    />
+                  ) : (
+                    <InfiniteTable
+                      width={width}
+                      height={height}
+                      depth={depth}
+                      ledColor={ledColor}
+                      frameColor={frameColor}
+                      fov={fov}
+                      aspect={aspect}
+                      near={near}
+                      far={far}
+                    />
+                  )}
+                </Suspense>
           </div>
           <div className="w-full lg:w-1/2">
             <h1 className="text-4xl text-center font-bold mb-4 gradient-text block md:hidden">Crea tu Espejo Infinito</h1>
@@ -145,9 +156,9 @@ export default function Home() {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="table" 
-                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg data-[state=inactive]:opacity-70 hidden md:block"
+                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg hidden md:block"
                   >
-                    <h1 className="text-sm lg:text-lg font-bold gradient-text data-[state=inactive]:text-muted-foreground break-words whitespace-normal">Mesa de centro infinita</h1>
+                    <h1 className="text-sm lg:text-lg font-bold gradient-text break-words whitespace-normal">Mesa de centro infinita</h1>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="smart-mirror" 
