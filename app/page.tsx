@@ -10,6 +10,7 @@ import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
 import InfinityMirror from "@/components/infinity-mirror"
+import InfiniteTable from "@/components/infinite-table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { InfoIcon } from "lucide-react"
@@ -23,6 +24,7 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isAddedToCart, setIsAddedToCart] = useState(false)
+  const [productType, setProductType] = useState("mirror")
   const { addToCart } = useCart()
   const topRef = useRef<HTMLDivElement>(null)
 
@@ -103,23 +105,37 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <section className="flex flex-col lg:flex-row gap-8 items-center">
           <div ref={topRef} className="w-full lg:w-1/2">
-                <InfinityMirror
-                  width={width}
-                  height={height}
-                  depth={depth}
-                  ledColor={ledColor}
-                  frameColor={frameColor}
-                  fov={fov}
-                  aspect={aspect}
-                  near={near}
-                  far={far}
-                />
+                {productType === "mirror" ? (
+                  <InfinityMirror
+                    width={width}
+                    height={height}
+                    depth={depth}
+                    ledColor={ledColor}
+                    frameColor={frameColor}
+                    fov={fov}
+                    aspect={aspect}
+                    near={near}
+                    far={far}
+                  />
+                ) : (
+                  <InfiniteTable
+                    width={width}
+                    height={height}
+                    depth={depth}
+                    ledColor={ledColor}
+                    frameColor={frameColor}
+                    fov={fov}
+                    aspect={aspect}
+                    near={near}
+                    far={far}
+                  />
+                )}
           </div>
           <div className="w-full lg:w-1/2">
             <h1 className="text-4xl text-center font-bold mb-4 gradient-text block md:hidden">Crea tu Espejo Infinito</h1>
             <h1 className="text-4xl font-bold mb-4 gradient-text hidden md:block">Crea tu propio</h1>
             <div className="tabs hidden md:block">
-              <Tabs defaultValue="mirror" className="w-full mb-6">
+              <Tabs value={productType} onValueChange={setProductType} className="w-full mb-6">
                 <TabsList className="flex flex-col lg:flex-row w-full bg-transparent p-0 gap-4">
                   <TabsTrigger 
                     value="mirror" 
@@ -129,16 +145,12 @@ export default function Home() {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="table" 
-                    disabled 
-                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 opacity-70 hidden md:block"
+                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg data-[state=inactive]:opacity-70 hidden md:block"
                   >
-                    <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Mesa de centro infinita</h1>
-                    <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
-                      ¡Pronto!
-                    </span>
+                    <h1 className="text-sm lg:text-lg font-bold gradient-text data-[state=inactive]:text-muted-foreground break-words whitespace-normal">Mesa de centro infinita</h1>
                   </TabsTrigger>
                   <TabsTrigger 
-                    value="table" 
+                    value="smart-mirror" 
                     disabled 
                     className="w-full block relative bg-transparent rounded-lg py-3 px-4 opacity-70 hidden md:block"
                   >
