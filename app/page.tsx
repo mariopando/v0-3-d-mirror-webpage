@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense, useCallback, lazy } from "react"
 import { useRouter } from "next/navigation"
 import ProductControls from "@/components/product-controls"
 import Navbar from "@/components/navbar"
@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
-import InfinityMirror from "@/components/infinity-mirror"
-import InfiniteTable from "@/components/infinite-table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { InfoIcon } from "lucide-react"
+
+// Dynamically import heavy Three.js components to split bundle
+const InfinityMirror = lazy(() => import("@/components/infinity-mirror"))
+const InfiniteTable = lazy(() => import("@/components/infinite-table"))
 
 // Loading fallback component
 function ComponentLoader() {
@@ -22,6 +24,22 @@ function ComponentLoader() {
       <div className="text-muted-foreground">Cargando componente...</div>
     </div>
   )
+}
+
+// Helper function for debouncing
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout
+  return function executedFunction(...args: Parameters<T>) {
+    const later = () => {
+      clearTimeout(timeout)
+      func(...args)
+    }
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait)
+  }
 }
 
 export default function Home() {
@@ -48,35 +66,35 @@ export default function Home() {
   const [far, setFar] = useState(1000)
 
   // Custom setters that scroll to top on mobile
-  const handleSetLedColor = (color: string) => {
+  const scrollToTop = useCallback(() => {
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [])
+
+  const handleSetLedColor = useCallback((color: string) => {
     setLedColor(color)
     if (isMobile) {
       scrollToTop()
     }
-  }
+  }, [isMobile, scrollToTop])
 
-  const handleSetFrameColor = (color: string) => {
+  const handleSetFrameColor = useCallback((color: string) => {
     setFrameColor(color)
     if (isMobile) {
       scrollToTop()
     }
-  }
-
-  const scrollToTop = () => {
-    if (topRef.current) {
-      topRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
+  }, [isMobile, scrollToTop])
 
   // Fix hydration issues and detect mobile
   useEffect(() => {
     // setIsClient(true)
-    const checkMobile = () => {
+    const checkMobile = debounce(() => {
       setIsMobile(window.innerWidth < 768)
-    }
+    }, 150)
     
     checkMobile()
-    window.addEventListener('resize', checkMobile)
+    window.addEventListener('resize', checkMobile, { passive: true })
     
     return () => {
       window.removeEventListener('resize', checkMobile)
@@ -90,7 +108,7 @@ export default function Home() {
     return basePrice + width * height * 13.5
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = useCallback(() => {
     const product = {
       id: `custom-${width}-${height}-${frameDepth}-${ledColor}`,
       name: `Espejo Infinito ${width}cm × ${height}cm`,
@@ -105,7 +123,7 @@ export default function Home() {
 
     addToCart(product)
     setIsAddedToCart(true)
-  }
+  }, [width, height, frameDepth, ledColor, depth, addToCart])
 
   return (
     <main className="min-h-screen text-foreground">

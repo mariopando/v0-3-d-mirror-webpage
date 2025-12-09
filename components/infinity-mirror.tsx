@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { useEffect, useRef, useState } from "react"
 import * as THREE from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
@@ -20,7 +21,7 @@ interface InfinityMirrorProps {
 }
 
 // @refresh reset
-export default function InfinityMirror({ 
+const InfinityMirror = React.memo(function InfinityMirror({ 
   width, 
   height, 
   depth, 
@@ -73,14 +74,30 @@ export default function InfinityMirror({
     camera.position.x = Math.max(widthUnits, heightUnits)
     camera.position.z = Math.max(widthUnits, heightUnits)
 
+    // Mobile detection for rendering optimization
+    const isMobileDevice = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    const isLowEndDevice = window.devicePixelRatio > 2
+
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: !isMobileDevice(),  // Disable on mobile
       powerPreference: "high-performance",
     })
     renderer.setSize(300, 300)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    
+    // Limit pixel ratio on mobile for better performance
+    const pixelRatio = isMobileDevice() 
+      ? Math.min(window.devicePixelRatio, 1.5)  // 1x-1.5x on mobile
+      : Math.min(window.devicePixelRatio, 2)     // 1x-2x on desktop
+
+    renderer.setPixelRatio(pixelRatio)
     renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    
+    // Simplify shadows on mobile
+    if (isMobileDevice()) {
+      renderer.shadowMap.type = THREE.BasicShadowMap  // Simpler shadows
+    } else {
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap  // Better shadows
+    }
     container.appendChild(renderer.domElement)
 
     // Track resources for proper cleanup
@@ -513,7 +530,8 @@ export default function InfinityMirror({
     const createInfiniteEffect = (x: number, y: number, position: number, ledsArray: THREE.Mesh[]) => {
       // OPTIMIZATION: Reduce the number of points for better performance
       const maxDepth = 15
-      const numPoints = 8 // Reduced from 10
+      // Further reduce on mobile for better performance
+      const numPoints = isMobileDevice() ? 5 : 8
 
       for (let i = 0; i < numPoints; i++) {
         const depth = ((i + 1) / numPoints) * maxDepth
@@ -767,4 +785,6 @@ export default function InfinityMirror({
         </div>
       </section>
   )
-}
+})
+
+export default InfinityMirror

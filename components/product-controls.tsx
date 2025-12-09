@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { Slider } from "@/components/ui/slider"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
@@ -17,7 +18,7 @@ interface ProductControlsProps {
   setFrameColor: (color: string) => void
 }
 
-export default function ProductControls({
+const ProductControls = React.memo(function ProductControls({
   width,
   setWidth,
   height,
@@ -225,4 +226,6 @@ export default function ProductControls({
       </div>
     </div>
   )
-}
+})
+
+export default ProductControls

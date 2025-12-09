@@ -10,7 +10,12 @@ import { CartProvider } from "@/context/cart-context"
 import { Toaster } from "@/components/ui/toaster"
 import Script from "next/script"
 
-const inter = Inter({ subsets: ["latin"] })
+// Optimize font loading with font-display: swap for better FOUT handling
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: "swap",  // Show fallback while font loads
+  preload: true,    // Preload the font
+})
 
 export const metadata: Metadata = {
   title: "Artesano Digital | Espejos Infinitos LED Personalizados",
@@ -27,6 +32,11 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        {/* Preload critical resources */}
+        <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+        
         {/* Add Three.js from CDN */}
         <Script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" strategy="beforeInteractive" />
         <Script
