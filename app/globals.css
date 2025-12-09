@@ -131,6 +131,11 @@
     font-style: italic;
     font-variation-settings: "wdth" 100;
   }
+
+  /* Gradient text for headings */
+  .gradient-text {
+    @apply bg-gradient-to-r from-purple-500 to-pink-500 text-transparent bg-clip-text;
+  }
 }
 
 @layer base {
@@ -219,11 +224,6 @@
 /* Smooth transitions for theme changes */
 * {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Gradient text compatibility */
-.gradient-text {
-  @apply bg-gradient-to-r from-purple-500 to-pink-500 text-transparent bg-clip-text;
 }
 
 /* Mirror specific styles */
@@ -334,9 +334,7 @@
 
 /* Responsive text */
 @media (max-width: 640px) {
-  .gradient-text {
-    @apply text-2xl;
-  }
+  /* Gradient text handled in components layer */
 }
 
 /* Print styles */
