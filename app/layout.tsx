@@ -1,6 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/navbar"
@@ -9,13 +8,6 @@ import RainbowBackground from "@/components/rainbow-background"
 import { CartProvider } from "@/context/cart-context"
 import { Toaster } from "@/components/ui/toaster"
 import Script from "next/script"
-
-// Optimize font loading with font-display: swap for better FOUT handling
-const inter = Inter({ 
-  subsets: ["latin"],
-  display: "swap",  // Show fallback while font loads
-  preload: true,    // Preload the font
-})
 
 export const metadata: Metadata = {
   title: "Artesano Digital | Espejos Infinitos LED Personalizados",
@@ -32,6 +24,13 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        {/* Google Fonts - Zalando Sans */}
+        <style>
+          {`
+            @import url('https://fonts.googleapis.com/css2?family=Zalando+Sans:ital,wght@0,200..900;1,200..900&display=swap');
+          `}
+        </style>
+
         {/* Preload critical resources */}
         <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -48,7 +47,7 @@ export default function RootLayout({
           strategy="beforeInteractive"
         />
       </head>
-      <body className={inter.className}>
+      <body className="zalando-sans-400">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <CartProvider>
             <RainbowBackground />
