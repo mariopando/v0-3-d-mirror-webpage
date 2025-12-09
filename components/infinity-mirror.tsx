@@ -68,7 +68,7 @@ const InfinityMirror = React.memo(function InfinityMirror({
     }
 
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(backgroundColor)
+    scene.background = null  // Transparent background
 
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
     camera.position.x = Math.max(widthUnits, heightUnits)
@@ -81,6 +81,7 @@ const InfinityMirror = React.memo(function InfinityMirror({
     const renderer = new THREE.WebGLRenderer({
       antialias: !isMobileDevice(),  // Disable on mobile
       powerPreference: "high-performance",
+      alpha: true,  // Enable transparency
     })
     renderer.setSize(300, 300)
     

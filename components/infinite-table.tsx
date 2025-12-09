@@ -61,7 +61,7 @@ export default function InfiniteTable({
     }
 
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(backgroundColor)
+    scene.background = null  // Transparent background
     scene.fog = new THREE.Fog(backgroundColor, 100, 1000)
 
     // Camera positioned to view table from above at an angle
@@ -78,7 +78,7 @@ export default function InfiniteTable({
     const renderer = new THREE.WebGLRenderer({
       antialias: !isMobileDevice(),
       powerPreference: "high-performance",
-      alpha: true,
+      alpha: true,  // Enable transparency
     })
     renderer.setSize(300, 300)
     renderer.toneMapping = THREE.ACESFilmicToneMapping
