@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import ProductControls from "@/components/product-controls"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
+import ContactForm from "@/components/contact-form"
 import { Button } from "@/components/ui/button"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
@@ -99,12 +100,12 @@ export default function Home() {
     }
   }, [])
 
-  const calculatePrice = () => {
+  const calculatePrice = useCallback(() => {
     // Base price in Chilean Pesos (approx. 199 USD = ~180,000 CLP)
     const basePrice = 180000
     // Add price based on size (0.015 USD = ~13.5 CLP per square cm)
     return basePrice + width * height * 13.5
-  }
+  }, [width, height])
 
   const handleAddToCart = useCallback(() => {
     const product = {
@@ -121,7 +122,7 @@ export default function Home() {
 
     addToCart(product)
     setIsAddedToCart(true)
-  }, [width, height, frameDepth, ledColor, depth, addToCart])
+  }, [width, height, frameDepth, ledColor, depth, addToCart, calculatePrice])
 
   return (
     <main className="min-h-screen text-foreground">
@@ -157,6 +158,7 @@ export default function Home() {
                     />
                   )}
                 </Suspense>
+                <ContactForm />
           </div>
           <div className="w-full lg:w-1/2">
             <h1 className="text-4xl text-center font-bold mb-4 gradient-text block md:hidden">Crea tu Espejo Infinito</h1>
@@ -252,43 +254,25 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-              <h3 className="text-xl font-semibold mb-4 text-foreground">Especificaciones del Producto</h3>
-              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                <li>
-                  Dimensiones: {width}cm × {height}cm × {depth}cm
-                </li>
-                <li>Marco: Madera pintada</li>
-                <li>Espejo: 2mm espesor</li>
-                <li>Led: Con conexion WiFi y/o Bluetooth a traves de app para Android/iOS</li>
-                <li>
-                  Color del marco de LED:{" "}
-                  {frameColor === "black"
-                    ? "Negro"
-                    : frameColor === "white"
-                      ? "Blanco"
-                      : frameColor === "blue"
-                        ? "Azul"
-                        : frameColor === "green"
-                          ? "Verde"
-                          : frameColor === "purple"
-                            ? "Púrpura"
-                              : frameColor === "pink"
-                                ? "Rosa"
-                                  : frameColor === "bluehammered"
-                                    ? "Azul martillado"
-                                    : frameColor === "greenhammered"
-                                      ? "Verde martillado"
-                                : ""}
-                </li>
-                <li>Alimentación por USB</li>
-                <li>Despacho a todo Chile, en 48 horas para productos prefabricados y de 6 a 12 días para productos personalizados</li>
-              </ul>
+            <div className="grid grid-cols-1 gap-6">
+              <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+                <h3 className="text-xl font-semibold mb-4 text-foreground">Especificaciones del Producto</h3>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                  <li>
+                    Dimensiones: {width}cm × {height}cm × {depth}cm
+                  </li>
+                  <li>Marco: Madera pintada</li>
+                  <li>Espejo: 2mm espesor</li>
+                  <li>Led: Con conexion WiFi y/o Bluetooth a traves de app para Android/iOS</li>
+                  <li>Alimentación por USB</li>
+                  <li>Despacho a todo Chile, en 48 horas para productos prefabricados y de 6 a 12 días para productos personalizados</li>
+                </ul>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="mb-16">
+        <section className="mb-16 gap-5">
           <h2 className="text-3xl font-bold mb-8 text-center text-foreground">
             ¿Por qué elegir nuestros Espejos Infinitos?
           </h2>
