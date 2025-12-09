@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { useEffect, useRef } from "react"
 
 interface CanvasMirrorProps {
@@ -9,9 +10,9 @@ interface CanvasMirrorProps {
   ledColor: string
 }
 
-export default function CanvasMirror({ width, height, depth, ledColor }: CanvasMirrorProps) {
+const CanvasMirror = React.memo(function CanvasMirror({ width, height, depth, ledColor }: CanvasMirrorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -212,4 +213,6 @@ export default function CanvasMirror({ width, height, depth, ledColor }: CanvasM
       style={{ background: "#000" }}
     />
   )
-}
+})
+
+export default CanvasMirror

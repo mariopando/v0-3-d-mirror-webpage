@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { Slider } from "@/components/ui/slider"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
@@ -15,9 +16,17 @@ interface ProductControlsProps {
   setLedColor: (color: string) => void
   frameColor: string
   setFrameColor: (color: string) => void
+  fov?: number
+  setFov?: (fov: number) => void
+  aspect?: number
+  setAspect?: (aspect: number) => void
+  near?: number
+  setNear?: (near: number) => void
+  far?: number
+  setFar?: (far: number) => void
 }
 
-export default function ProductControls({
+const ProductControls = React.memo(function ProductControls({
   width,
   setWidth,
   height,
@@ -225,4 +234,6 @@ export default function ProductControls({
       </div>
     </div>
   )
-}
+})
+
+export default ProductControls

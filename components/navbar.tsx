@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import Link from "next/link"
 import { ShoppingCart, Menu, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -7,7 +8,7 @@ import { useState } from "react"
 import { useCart } from "@/context/cart-context"
 import { ThemeToggle } from "@/components/theme-toggle"
 
-export default function Navbar() {
+const Navbar = React.memo(function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { items } = useCart()
 
@@ -72,11 +73,15 @@ export default function Navbar() {
         </div>
 
         <nav
-          className={`${
-            isMenuOpen
-              ? "flex flex-col absolute top-16 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border p-4 space-y-4 md:space-y-0"
-              : "hidden"
-          } md:flex md:items-center md:space-x-6 md:static md:bg-transparent md:p-0 md:border-0`}
+          className={`flex flex-col md:flex-row absolute md:static top-16 md:top-auto 
+            left-0 md:left-auto right-0 md:right-auto
+            bg-background/95 md:bg-transparent
+            transition-all duration-300 ease-in-out
+            ${isMenuOpen ? "max-h-96" : "max-h-0 md:max-h-none"} 
+            overflow-hidden md:overflow-visible
+            border-b md:border-0 border-border
+            backdrop-blur-sm md:backdrop-blur-none
+            md:items-center md:space-x-6 md:p-0 p-4 space-y-4 md:space-y-0`}
         >
           <Link href="/" className="text-foreground hover:text-purple-400 transition-colors">
             Inicio
@@ -125,4 +130,6 @@ export default function Navbar() {
       )}
     </header>
   )
-}
+})
+
+export default Navbar

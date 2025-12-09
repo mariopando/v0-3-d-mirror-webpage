@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import ProductControls from "@/components/product-controls"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
+import ContactForm from "@/components/contact-form"
 import { Button } from "@/components/ui/button"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
@@ -22,6 +23,22 @@ function ComponentLoader() {
       <div className="text-muted-foreground">Cargando componente...</div>
     </div>
   )
+}
+
+// Helper function for debouncing
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout
+  return function executedFunction(...args: Parameters<T>) {
+    const later = () => {
+      clearTimeout(timeout)
+      func(...args)
+    }
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait)
+  }
 }
 
 export default function Home() {
@@ -48,49 +65,49 @@ export default function Home() {
   const [far, setFar] = useState(1000)
 
   // Custom setters that scroll to top on mobile
-  const handleSetLedColor = (color: string) => {
+  const scrollToTop = useCallback(() => {
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [])
+
+  const handleSetLedColor = useCallback((color: string) => {
     setLedColor(color)
     if (isMobile) {
       scrollToTop()
     }
-  }
+  }, [isMobile, scrollToTop])
 
-  const handleSetFrameColor = (color: string) => {
+  const handleSetFrameColor = useCallback((color: string) => {
     setFrameColor(color)
     if (isMobile) {
       scrollToTop()
     }
-  }
-
-  const scrollToTop = () => {
-    if (topRef.current) {
-      topRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
+  }, [isMobile, scrollToTop])
 
   // Fix hydration issues and detect mobile
   useEffect(() => {
     // setIsClient(true)
-    const checkMobile = () => {
+    const checkMobile = debounce(() => {
       setIsMobile(window.innerWidth < 768)
-    }
+    }, 150)
     
     checkMobile()
-    window.addEventListener('resize', checkMobile)
+    window.addEventListener('resize', checkMobile, { passive: true })
     
     return () => {
       window.removeEventListener('resize', checkMobile)
     }
   }, [])
 
-  const calculatePrice = () => {
+  const calculatePrice = useCallback(() => {
     // Base price in Chilean Pesos (approx. 199 USD = ~180,000 CLP)
     const basePrice = 180000
     // Add price based on size (0.015 USD = ~13.5 CLP per square cm)
     return basePrice + width * height * 13.5
-  }
+  }, [width, height])
 
-  const handleAddToCart = () => {
+  const handleAddToCart = useCallback(() => {
     const product = {
       id: `custom-${width}-${height}-${frameDepth}-${ledColor}`,
       name: `Espejo Infinito ${width}cm × ${height}cm`,
@@ -105,7 +122,7 @@ export default function Home() {
 
     addToCart(product)
     setIsAddedToCart(true)
-  }
+  }, [width, height, frameDepth, ledColor, depth, addToCart, calculatePrice])
 
   return (
     <main className="min-h-screen text-foreground">
@@ -141,6 +158,7 @@ export default function Home() {
                     />
                   )}
                 </Suspense>
+                <ContactForm />
           </div>
           <div className="w-full lg:w-1/2">
             <h1 className="text-4xl text-center font-bold mb-4 gradient-text block md:hidden">Crea tu Espejo Infinito</h1>
@@ -156,14 +174,18 @@ export default function Home() {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="table" 
-                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg hidden md:block"
+                    disabled 
+                    className="w-full relative bg-transparent rounded-lg py-3 px-4 opacity-70 md:block"
                   >
-                    <h1 className="text-sm lg:text-lg font-bold gradient-text break-words whitespace-normal">Mesa de centro infinita</h1>
+                    <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Mesa de centro infinita</h1>
+                    <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
+                      ¡Pronto!
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="smart-mirror" 
                     disabled 
-                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 opacity-70 hidden md:block"
+                    className="w-full relative bg-transparent rounded-lg py-3 px-4 opacity-70 md:block"
                   >
                     <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Espejo inteligente</h1>
                     <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
@@ -232,43 +254,25 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-              <h3 className="text-xl font-semibold mb-4 text-foreground">Especificaciones del Producto</h3>
-              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                <li>
-                  Dimensiones: {width}cm × {height}cm × {depth}cm
-                </li>
-                <li>Marco: Madera pintada</li>
-                <li>Espejo: 2mm espesor</li>
-                <li>Led: Con conexion WiFi y/o Bluetooth a traves de app para Android/iOS</li>
-                <li>
-                  Color del marco de LED:{" "}
-                  {frameColor === "black"
-                    ? "Negro"
-                    : frameColor === "white"
-                      ? "Blanco"
-                      : frameColor === "blue"
-                        ? "Azul"
-                        : frameColor === "green"
-                          ? "Verde"
-                          : frameColor === "purple"
-                            ? "Púrpura"
-                              : frameColor === "pink"
-                                ? "Rosa"
-                                  : frameColor === "bluehammered"
-                                    ? "Azul martillado"
-                                    : frameColor === "greenhammered"
-                                      ? "Verde martillado"
-                                : ""}
-                </li>
-                <li>Alimentación por USB</li>
-                <li>Despacho a todo Chile, en 48 horas para productos prefabricados y de 6 a 12 días para productos personalizados</li>
-              </ul>
+            <div className="grid grid-cols-1 gap-6">
+              <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+                <h3 className="text-xl font-semibold mb-4 text-foreground">Especificaciones del Producto</h3>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                  <li>
+                    Dimensiones: {width}cm × {height}cm × {depth}cm
+                  </li>
+                  <li>Marco: Madera pintada</li>
+                  <li>Espejo: 2mm espesor</li>
+                  <li>Led: Con conexion WiFi y/o Bluetooth a traves de app para Android/iOS</li>
+                  <li>Alimentación por USB</li>
+                  <li>Despacho a todo Chile, en 48 horas para productos prefabricados y de 6 a 12 días para productos personalizados</li>
+                </ul>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="mb-16">
+        <section className="mb-16 gap-5">
           <h2 className="text-3xl font-bold mb-8 text-center text-foreground">
             ¿Por qué elegir nuestros Espejos Infinitos?
           </h2>

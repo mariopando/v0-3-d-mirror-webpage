@@ -1,15 +1,13 @@
 "use client"
 
-import React from "react"
 import { useEffect, useRef, useState } from "react"
 import * as THREE from "three"
-// @ts-expect-error - Three.js examples don't have TypeScript declarations
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 import { RadioGroup } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { useTheme } from "next-themes"
 
-interface InfinityMirrorProps {
+interface InfiniteTableProps {
   width: number
   height: number
   depth: number
@@ -22,7 +20,7 @@ interface InfinityMirrorProps {
 }
 
 // @refresh reset
-const InfinityMirror = React.memo(function InfinityMirror({ 
+export default function InfiniteTable({ 
   width, 
   height, 
   depth, 
@@ -32,7 +30,7 @@ const InfinityMirror = React.memo(function InfinityMirror({
   aspect,
   near,
   far,
-}: InfinityMirrorProps) {
+}: InfiniteTableProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [showIcon, setShowIcon] = useState(true)
   const [fadeOut, setFadeOut] = useState(false)
@@ -69,7 +67,7 @@ const InfinityMirror = React.memo(function InfinityMirror({
     }
 
     const scene = new THREE.Scene()
-    scene.background = null  // Transparent background
+    scene.background = new THREE.Color(backgroundColor)
 
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
     camera.position.x = Math.max(widthUnits, heightUnits)
@@ -82,7 +80,6 @@ const InfinityMirror = React.memo(function InfinityMirror({
     const renderer = new THREE.WebGLRenderer({
       antialias: !isMobileDevice(),  // Disable on mobile
       powerPreference: "high-performance",
-      alpha: true,  // Enable transparency
     })
     renderer.setSize(300, 300)
     
@@ -787,6 +784,4 @@ const InfinityMirror = React.memo(function InfinityMirror({
         </div>
       </section>
   )
-})
-
-export default InfinityMirror
+}
