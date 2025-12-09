@@ -1,0 +1,770 @@
+"use client"
+
+import { useEffect, useRef, useState } from "react"
+import * as THREE from "three"
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+import { RadioGroup } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { useTheme } from "next-themes"
+
+interface InfiniteTableProps {
+  width: number
+  height: number
+  depth: number
+  ledColor: string
+  frameColor: string
+  fov: number
+  aspect: number
+  near: number
+  far: number
+}
+
+// @refresh reset
+export default function InfiniteTable({ 
+  width, 
+  height, 
+  depth, 
+  ledColor,
+  frameColor,
+  fov,
+  aspect,
+  near,
+  far,
+}: InfiniteTableProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [showIcon, setShowIcon] = useState(true)
+  const [fadeOut, setFadeOut] = useState(false)
+  
+  // Create a single TextureLoader instance at component level to avoid duplication
+  const textureLoaderRef = useRef<THREE.TextureLoader | null>(null)
+  const textureCache = useRef<Map<string, THREE.Texture>>(new Map())
+
+  const { theme } = useTheme()
+
+  const handleCanvasInteraction = () => {
+    setFadeOut(true)
+    setTimeout(() => setShowIcon(false), 600)
+  }
+
+  // Helper function to validate dimensions
+  const validateDimension = (value: number, fallback: number = 1) => {
+    return isNaN(value) || value <= 0 ? fallback : value
+  }
+
+  const widthUnits = validateDimension(width / 10)
+  const heightUnits = validateDimension(height / 10)
+  const depthUnits = validateDimension(depth / 10)
+  const backgroundColor = theme === 'dark' ? 'rgba(2, 8, 23, 0.6)' : 'rgba(255, 255, 255, 0.6)';
+
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    // Store current ref value for use in cleanup function
+    const container = containerRef.current
+
+    while (container.firstChild) {
+      container.removeChild(container.firstChild)
+    }
+
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(backgroundColor)
+
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
+    camera.position.x = Math.max(widthUnits, heightUnits)
+    camera.position.z = Math.max(widthUnits, heightUnits)
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance",
+    })
+    renderer.setSize(300, 300)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    container.appendChild(renderer.domElement)
+
+    // Track resources for proper cleanup
+    const resourcesForCleanup = {
+      geometries: [] as THREE.BufferGeometry[],
+      materials: [] as THREE.Material[],
+      textures: [] as THREE.Texture[],
+    }
+
+    // Material cache to reuse materials instead of creating duplicates
+    const materialCache = new Map<string, THREE.Material>()
+
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.dampingFactor = 0.05
+    controls.rotateSpeed = 0.5
+    controls.autoRotate = true
+    controls.autoRotateSpeed = 1
+    controls.autoRotateDelay = 0 // Rotación continua sin pausas
+
+    // Restricciones de ángulo para evitar ver la parte trasera
+    controls.minAzimuthAngle = -Math.PI/4
+    controls.maxAzimuthAngle = Math.PI/4
+    controls.minPolarAngle = Math.PI/4
+    controls.maxPolarAngle = Math.PI/2
+
+    // Configuración de distancia
+    controls.minDistance = Math.max(widthUnits, heightUnits) * 0.5
+    controls.maxDistance = Math.max(widthUnits, heightUnits) * 2
+
+    // Limitaciones de movimiento
+    controls.enablePan = false
+    controls.enableZoom = true
+    controls.screenSpacePanning = false
+
+    controls.update()
+
+
+    // Hidebox
+    const createHidebox = () => {
+      const frameInnerSideMaterial = new THREE.MeshBasicMaterial({
+        color: '#000000',
+        side: THREE.FrontSide
+      })
+      resourcesForCleanup.materials.push(frameInnerSideMaterial)
+
+      const frameOutsideMaterial = new THREE.MeshBasicMaterial({
+        color: 0x020817,
+        side: THREE.BackSide
+      });
+      resourcesForCleanup.materials.push(frameOutsideMaterial)
+
+      const frameSides: THREE.Mesh[] = []
+
+      // Top frame piece
+      const topGeometry = new THREE.BoxGeometry(widthUnits, 0.005, 3)
+      resourcesForCleanup.geometries.push(topGeometry)
+      let topFrame = new THREE.Mesh(topGeometry, frameInnerSideMaterial)
+      topFrame.position.y = heightUnits / 2
+      topFrame.position.x = 0
+      topFrame.position.z =  0
+
+      frameSides.push(topFrame)
+      const topGeometry2 = new THREE.BoxGeometry(widthUnits, 0.005, 3)
+      resourcesForCleanup.geometries.push(topGeometry2)
+      topFrame = new THREE.Mesh(topGeometry2, frameOutsideMaterial)
+      topFrame.position.y = heightUnits / 1.99
+      topFrame.position.z = heightUnits * 0.0001
+      frameSides.push(topFrame)
+
+      // Bottom frame piece
+      const bottomGeometry = new THREE.BoxGeometry(widthUnits, 0.005, 3)
+      resourcesForCleanup.geometries.push(bottomGeometry)
+      let bottomFrame = new THREE.Mesh(bottomGeometry, frameInnerSideMaterial)
+      bottomFrame.position.y = -heightUnits / 1.99
+      bottomFrame.position.z = 0
+
+      frameSides.push(bottomFrame)
+      const bottomGeometry2 = new THREE.BoxGeometry(widthUnits, 0.005, 3)
+      resourcesForCleanup.geometries.push(bottomGeometry2)
+      bottomFrame = new THREE.Mesh(bottomGeometry2, frameOutsideMaterial)
+      bottomFrame.position.y = -heightUnits / 1.985
+      bottomFrame.position.z = 0
+      frameSides.push(bottomFrame)
+
+      // Left frame piece
+      const leftGeometry = new THREE.BoxGeometry(0.005, heightUnits, 3)
+      resourcesForCleanup.geometries.push(leftGeometry)
+      let leftFrame = new THREE.Mesh(leftGeometry, frameInnerSideMaterial)
+      leftFrame.position.x = -widthUnits / 2
+      leftFrame.position.z = 0
+
+      frameSides.push(leftFrame)
+      const leftGeometry2 = new THREE.BoxGeometry(0.005, heightUnits, 3)
+      resourcesForCleanup.geometries.push(leftGeometry2)
+      leftFrame = new THREE.Mesh(leftGeometry2, frameOutsideMaterial)
+      leftFrame.position.y = 0
+      leftFrame.position.x = -widthUnits / 1.985
+      leftFrame.position.z = 0 / 2
+      frameSides.push(leftFrame)
+
+      // Right frame piece
+      const rightGeometry = new THREE.BoxGeometry(0.005, heightUnits, 3)
+      resourcesForCleanup.geometries.push(rightGeometry)
+      let rightFrame = new THREE.Mesh(rightGeometry, frameInnerSideMaterial)
+      rightFrame.position.x = widthUnits / 2
+      rightFrame.position.z = 0
+
+      frameSides.push(rightFrame)
+      const rightGeometry2 = new THREE.BoxGeometry(0.005, heightUnits, 3)
+      resourcesForCleanup.geometries.push(rightGeometry2)
+      rightFrame = new THREE.Mesh(rightGeometry2, frameOutsideMaterial)
+      rightFrame.position.x = widthUnits / 1.985
+      rightFrame.position.z = 0
+      frameSides.push(rightFrame)
+
+      // background frame piece
+      const aboveGeometry = new THREE.BoxGeometry(widthUnits, heightUnits, 0.005)
+      resourcesForCleanup.geometries.push(aboveGeometry)
+      let aboveFrame = new THREE.Mesh(aboveGeometry, frameInnerSideMaterial)
+      aboveFrame.position.y = 0
+      aboveFrame.position.z = -1.5
+
+      frameSides.push(aboveFrame)
+      const aboveGeometry2 = new THREE.BoxGeometry(widthUnits, heightUnits, 0.005)
+      resourcesForCleanup.geometries.push(aboveGeometry2)
+      aboveFrame = new THREE.Mesh(aboveGeometry2, frameOutsideMaterial)
+      aboveFrame.position.y = 0
+      aboveFrame.position.z = -1.55
+      frameSides.push(aboveFrame)
+
+
+      // Add all frame pieces to the scene
+      frameSides.forEach(side => scene.add(side))
+
+      return frameSides
+    }
+
+    const getFrameColor = (position: number) => {
+      // Initialize TextureLoader only once
+      if (!textureLoaderRef.current) {
+        textureLoaderRef.current = new THREE.TextureLoader()
+      }
+      
+      const loader = textureLoaderRef.current
+      
+      const loadTexture = (texturePath: string) => {
+        // Check cache first
+        if (textureCache.current.has(texturePath)) {
+          const cachedTexture = textureCache.current.get(texturePath)!
+          return new THREE.MeshBasicMaterial({ map: cachedTexture })
+        }
+        
+        // Load texture if not in cache
+        const texture = loader.load(texturePath)
+        texture.wrapS = THREE.RepeatWrapping
+        texture.wrapT = THREE.RepeatWrapping
+        texture.repeat.set(1, 10)
+        texture.minFilter = THREE.LinearMipMapLinearFilter
+        texture.magFilter = THREE.LinearFilter
+        texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
+        
+        // Store in cache
+        textureCache.current.set(texturePath, texture)
+        
+        // Track for cleanup
+        resourcesForCleanup.textures.push(texture)
+        
+        return new THREE.MeshBasicMaterial({ map: texture })
+      }
+
+      switch (frameColor) {
+        case "madera-natural":
+          return loadTexture('/Texturelabs_Wood_267S.jpg')
+        case "martillado-azul":
+          return loadTexture('/206.jpg')
+        case "martillado-verde":
+          return loadTexture('/uneven-background-texture_1072286-34.jpg')
+        case "martillado-cobre":
+          return loadTexture('/133227_header3_small.jpg')
+        default: {
+          const colorMap: { [key: string]: number } = {
+            "madera-barnices": 0xCD853F,
+            "nogal": 0x654321,
+            "caoba": 0x8B4513,
+            "blanco": 0xffffff,
+            "negro": 0x000000,
+            "rojo": 0xDC143C,
+            "azul": 0x0047AB,
+            "verde": 0x228B22,
+            "amarillo": 0xFFD700,
+            "aluminio": 0xC0C0C0,
+          }
+          const material = new THREE.MeshBasicMaterial({
+            color: colorMap[frameColor] || 0xffffff,
+            opacity: 1,
+            transparent: false,
+          })
+          resourcesForCleanup.materials.push(material)
+          return material
+        }
+      }
+    }
+
+    const createFrameScene = () => {
+      const frameMaterial = getFrameColor(1) as THREE.MeshBasicMaterial
+      
+      if (frameMaterial instanceof THREE.Material) {
+        resourcesForCleanup.materials.push(frameMaterial)
+      }
+
+      // OPTIMIZATION: Use single InstancedMesh instead of 4 individual meshes
+      // Reduces draw calls from 4 to 1, batching all frame geometry
+      const geometry = new THREE.BoxGeometry(1, 1, depthUnits)
+      resourcesForCleanup.geometries.push(geometry)
+      const instancedMesh = new THREE.InstancedMesh(geometry, frameMaterial, 4)
+      
+      const matrix = new THREE.Matrix4()
+      
+      // Top frame (scale: widthUnits x 0.05 x depthUnits, position: 0, heightUnits/2, 1.6)
+      matrix.compose(
+        new THREE.Vector3(0, heightUnits / 2, 1.6),
+        new THREE.Quaternion(),
+        new THREE.Vector3(widthUnits, 0.05, 1)
+      )
+      instancedMesh.setMatrixAt(0, matrix)
+      
+      // Bottom frame (scale: widthUnits x 0.05 x depthUnits, position: 0, -heightUnits/2, 1.6)
+      matrix.compose(
+        new THREE.Vector3(0, -heightUnits / 2, 1.6),
+        new THREE.Quaternion(),
+        new THREE.Vector3(widthUnits, 0.05, 1)
+      )
+      instancedMesh.setMatrixAt(1, matrix)
+      
+      // Left frame (scale: 0.05 x heightUnits x depthUnits, position: -widthUnits/2, 0, 1.6)
+      matrix.compose(
+        new THREE.Vector3(-widthUnits / 2, 0, 1.6),
+        new THREE.Quaternion(),
+        new THREE.Vector3(0.05, heightUnits, 1)
+      )
+      instancedMesh.setMatrixAt(2, matrix)
+      
+      // Right frame (scale: 0.05 x heightUnits x depthUnits, position: widthUnits/2, 0, 1.6)
+      matrix.compose(
+        new THREE.Vector3(widthUnits / 2, 0, 1.6),
+        new THREE.Quaternion(),
+        new THREE.Vector3(0.05, heightUnits, 1)
+      )
+      instancedMesh.setMatrixAt(3, matrix)
+      
+      instancedMesh.instanceMatrix.needsUpdate = true
+      scene.add(instancedMesh)
+
+      return instancedMesh
+    }
+
+    const createSurfaceMirrorScene = () => {
+      const mirrorGeometry = new THREE.PlaneGeometry(
+        widthUnits,
+        heightUnits
+      )
+      resourcesForCleanup.geometries.push(mirrorGeometry)
+      // OPTIMIZATION: Use MeshBasicMaterial instead of MeshStandardMaterial
+      // MeshBasicMaterial is much faster as it doesn't require complex lighting calculations
+      const mirrorMaterial = new THREE.MeshBasicMaterial({
+        color: 0xFFFFFF,
+        opacity: 0.1,
+        transparent: true,
+      })
+      resourcesForCleanup.materials.push(mirrorMaterial)
+      const mirror = new THREE.Mesh(mirrorGeometry, mirrorMaterial)
+      mirror.position.z = 1.6
+      scene.add(mirror)
+    }
+
+    const numLeds = 10
+
+    // Data structure to store LED information for instancing and animation
+    interface LedData {
+      position: THREE.Vector3
+      color: THREE.Color
+      depthIndex: number
+      baseIntensity: number
+      pulseAmount: number
+    }
+    const ledDataArray: LedData[] = []
+    const ledMeshMap = new Map<string, { mesh: THREE.Mesh; instances: number[] }>()
+
+    // Shared uniforms for all shader materials (updated once per frame)
+    const shaderUniforms = {
+      time: { value: 0 },
+      numLeds: { value: numLeds },
+      animationMode: { value: 0 }, // 0: pulse, 1: strobe, 2: waves, 3: rainbow, 4: breathing
+    }
+
+    // Helper function to create GPU-accelerated material with built-in animation
+    const createGpuAnimatedMaterial = (
+      color: THREE.Color,
+      baseIntensity: number,
+      pulseAmount: number,
+      opacity: number
+    ): THREE.ShaderMaterial => {
+      // Fragment shader with 4 different animation effects
+      const fragmentShader = `
+        uniform float time;
+        uniform float baseIntensity;
+        uniform float pulseAmount;
+        uniform int animationMode;
+        varying vec3 vColor;
+        
+        void main() {
+          float intensity = baseIntensity;
+          
+          // Effect 0: Classic Pulse (smooth sine wave)
+          if (animationMode == 0) {
+            float pulse = sin(time * 2.0) * pulseAmount;
+            intensity = baseIntensity * (1.0 + pulse);
+          }
+          // Effect 1: Strobe (rapid on/off flashing)
+          else if (animationMode == 1) {
+            float strobeFreq = 4.0;
+            float strobe = step(0.5, mod(time * strobeFreq, 1.0));
+            intensity = baseIntensity * (0.3 + strobe * 0.7);
+          }
+          // Effect 2: Waves (traveling wave pattern)
+          else if (animationMode == 2) {
+            float waveFreq = 3.0;
+            float wave = sin(time * waveFreq * 2.0 + gl_FragCoord.y * 0.1) * 0.5 + 0.5;
+            intensity = baseIntensity * (0.4 + wave * 0.6);
+          }
+          // Effect 3: Rainbow Breathing (pulsing with varied intensity)
+          else if (animationMode == 3) {
+            float breathe = sin(time * 1.5) * 0.3 + 0.7;
+            float colorShift = sin(time * 0.5) * 0.5 + 0.5;
+            intensity = baseIntensity * breathe;
+          }
+          // Effect 4: Double Pulse (two peaks per cycle)
+          else {
+            float doublePulse = abs(sin(time * 4.0)) * pulseAmount;
+            intensity = baseIntensity * (0.6 + doublePulse * 0.4);
+          }
+          
+          gl_FragColor = vec4(vColor * intensity, ${opacity});
+        }
+      `
+      
+      const vertexShader = `
+        varying vec3 vColor;
+        
+        void main() {
+          vColor = vec3(${color.r}, ${color.g}, ${color.b});
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `
+
+      return new THREE.ShaderMaterial({
+        uniforms: {
+          time: shaderUniforms.time,
+          baseIntensity: { value: baseIntensity },
+          pulseAmount: { value: pulseAmount },
+          animationMode: shaderUniforms.animationMode,
+        },
+        vertexShader,
+        fragmentShader,
+        transparent: true,
+        side: THREE.FrontSide,
+      })
+    }
+
+    // Helper function to get or create cached materials
+    const getCachedMaterial = (
+      color: THREE.Color,
+      emissiveIntensity: number,
+      opacity: number,
+      cacheKey: string
+    ): THREE.Material => {
+      if (materialCache.has(cacheKey)) {
+        return materialCache.get(cacheKey)!
+      }
+
+      // OPTIMIZATION: Use GPU-accelerated shader material instead of updating CPU every frame
+      const material = createGpuAnimatedMaterial(color, emissiveIntensity, 0.5, opacity)
+      materialCache.set(cacheKey, material)
+      resourcesForCleanup.materials.push(material)
+      return material
+    }
+
+    const createLedsScene = () => {
+    const ledSize = 0.05
+    const leds: THREE.Mesh[] = []
+
+    const getLedColor = (position: number) => {
+      if (ledColor === "rainbow") {
+        const hue = (position + 0.5) / 2
+        return new THREE.Color().setHSL(hue, 1, 0.5)
+      } else {
+        const colorMap: { [key: string]: number } = {
+          white: 0xffffff,
+          blue: 0x0088ff,
+          green: 0x00ff88,
+          yellow: 0xFFE100,
+          purple: 0x850089,
+          pink: 0xFB87FE,
+        }
+        return new THREE.Color(colorMap[ledColor] || colorMap.pink)
+      }
+    }
+
+      const createLed = (x: number, y: number, position: number) => {
+        const ledGeometry = new THREE.BoxGeometry(
+          ledSize,
+          ledSize,
+          0.05
+        )
+        resourcesForCleanup.geometries.push(ledGeometry)
+        const color = getLedColor(position)
+        
+        // Use cached material instead of creating a new one
+        const cacheKey = `led-${color.getHexString()}-base`
+        const ledMaterial = getCachedMaterial(color, 2, 0.1, cacheKey)
+        
+        const led = new THREE.Mesh(ledGeometry, ledMaterial)
+        // Position LED considering frame width
+       led.position.set(x, y, depth / 2 + 0.01)
+
+        createInfiniteEffect(x, y, position, leds)
+      }
+
+    const createInfiniteEffect = (x: number, y: number, position: number, ledsArray: THREE.Mesh[]) => {
+      // OPTIMIZATION: Reduce the number of points for better performance
+      const maxDepth = 15
+      const numPoints = 8 // Reduced from 10
+
+      for (let i = 0; i < numPoints; i++) {
+        const depth = ((i + 1) / numPoints) * maxDepth
+        const z = 2 - depth * 0.2
+
+        // Scale coordinates slightly to create perspective
+        const scale = 0.97 - i * 0.01
+        const scaledX = x * scale
+        const scaledY = y * scale
+
+        const pointGeometry = new THREE.BoxGeometry(ledSize * 0.8, ledSize * 0.8, 0.02)
+        resourcesForCleanup.geometries.push(pointGeometry)
+        const color = getLedColor(position)
+
+        // Calculate opacity and intensity based on depth
+        const opacityFactor = 1 - (i / numPoints) * 0.7
+        const intensityFactor = 1.5 * (1 - (i / numPoints) * 0.7)
+        
+        // Use cached material with a depth-based cache key
+        const cacheKey = `led-${color.getHexString()}-depth-${i}`
+        const pointMaterial = getCachedMaterial(color, intensityFactor, opacityFactor, cacheKey)
+
+        const point = new THREE.Mesh(pointGeometry, pointMaterial)
+        point.position.set(scaledX, scaledY, z)
+        scene.add(point)
+        ledsArray.push(point)
+        
+        // OPTIMIZATION: Track LED data for animation updates
+        ledDataArray.push({
+          position: new THREE.Vector3(scaledX, scaledY, z),
+          color: color.clone(),
+          depthIndex: i,
+          baseIntensity: i < numLeds * 4 ? 2 : 1.5 * (1 - (Math.floor(i / (numLeds * 4)) / 8) * 0.7),
+          pulseAmount: i < numLeds * 4 ? 0.5 : 0.3,
+        })
+      }
+    }
+
+    const createPerimeterLeds = () => {
+      let numbLeds = numLeds;
+      // Top edge
+      for (let i = 0; i < numLeds; i++) {
+        const x = -widthUnits / 2 + (widthUnits * i) / (numLeds - 1)
+        const y = heightUnits / 2
+        const position = i / (numLeds - 1)
+        createLed(x, y, position)
+      }
+
+      // Right edge
+      for (let i = 0; i < numLeds; i++) {
+        const x = widthUnits / 2
+        const y = heightUnits / 2 - (heightUnits * i) / (numLeds - 1)
+        const position = (i + numLeds) / numbLeds
+        createLed(x, y, position)
+      }
+
+      // Bottom edge
+      for (let i = 0; i < numLeds; i++) {
+        const x = widthUnits / 2 - (widthUnits * i) / (numLeds - 1)
+        const y = -heightUnits / 2
+        const position = (i + numLeds * 2) / numbLeds
+        createLed(x, y, position)
+      }
+
+      // Left edge
+      for (let i = 0; i < numLeds; i++) {
+        const x = -widthUnits / 2
+        const y = -heightUnits / 2 + (heightUnits * i) / (numLeds - 1)
+        const position = (i + numLeds * 3) / numbLeds
+        createLed(x, y, position)
+      }
+    }
+
+      createPerimeterLeds()
+      return leds
+    }
+
+    // Create all scenes
+    createHidebox()
+    createFrameScene()
+    createSurfaceMirrorScene()
+    const leds = createLedsScene()
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040)
+    scene.add(ambientLight)
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5)
+    directionalLight.position.set(1, 1, 1)
+    scene.add(directionalLight)
+
+    // Animation loop
+    const animate = () => {
+      const animationId = requestAnimationFrame(animate)
+      controls.update()
+
+      const time = performance.now() * 0.001
+      
+      // OPTIMIZATION: Update only the shared time uniform (GPU handles animation)
+      // This is much faster than updating 320+ material properties per frame
+      shaderUniforms.time.value = time
+      
+      // Cycle through 4 animation effects every 15 seconds (total cycle = 60 seconds)
+      const cycleTime = time % 60
+      const effectIndex = Math.floor(cycleTime / 15)
+      shaderUniforms.animationMode.value = effectIndex
+      
+      renderer.render(scene, camera)
+      return animationId
+    }
+
+    const animationId = animate()
+
+    return () => {
+      // Cancel animation frame
+      cancelAnimationFrame(animationId)
+      
+      // OPTIMIZATION: Defer non-critical cleanup to idle time to avoid frame blocking
+      if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(() => {
+          // Dispose of all geometries
+          resourcesForCleanup.geometries.forEach(geometry => {
+            geometry.dispose()
+          })
+          
+          // Dispose of all materials
+          resourcesForCleanup.materials.forEach(material => {
+            material.dispose()
+          })
+          
+          // Dispose of all textures
+          resourcesForCleanup.textures.forEach(texture => {
+            texture.dispose()
+          })
+          
+          // Clear arrays
+          resourcesForCleanup.geometries.length = 0
+          resourcesForCleanup.materials.length = 0
+          resourcesForCleanup.textures.length = 0
+        })
+      } else {
+        // Fallback for browsers without requestIdleCallback
+        setTimeout(() => {
+          resourcesForCleanup.geometries.forEach(geometry => geometry.dispose())
+          resourcesForCleanup.materials.forEach(material => material.dispose())
+          resourcesForCleanup.textures.forEach(texture => texture.dispose())
+          resourcesForCleanup.geometries.length = 0
+          resourcesForCleanup.materials.length = 0
+          resourcesForCleanup.textures.length = 0
+        }, 0)
+      }
+      
+      // Critical cleanup (must happen immediately)
+      scene.clear()
+      renderer.dispose()
+      controls.dispose()
+      
+      // Remove canvas from DOM
+      if (renderer.domElement.parentNode === container) {
+        container.removeChild(renderer.domElement)
+      }
+    }
+  }, [width, height, depth, ledColor, widthUnits, heightUnits, depthUnits, frameColor, fov, aspect, near, far, backgroundColor])
+
+  // Cleanup texture cache and TextureLoader on component unmount
+  useEffect(() => {
+    const cache = textureCache.current
+    
+    return () => {
+      // Dispose all cached textures
+      cache.forEach(texture => {
+        texture.dispose()
+      })
+      cache.clear()
+      
+      // Reset TextureLoader reference
+      textureLoaderRef.current = null
+    }
+  }, [])
+
+  return (
+    <section className="flex flex-col lg:flex-row gap-4 items-center">
+        <div className="canvas-container relative" onMouseDown={handleCanvasInteraction} onTouchStart={handleCanvasInteraction}>
+          <div ref={containerRef}></div>
+          {showIcon && (
+            <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-600 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
+              <style>{`
+                @keyframes pulse-ring {
+                  0% {
+                    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+                  }
+                  70% {
+                    box-shadow: 0 0 0 30px rgba(168, 85, 247, 0);
+                  }
+                  100% {
+                    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+                  }
+                }
+                
+                @keyframes bounce-touch {
+                  0%, 100% {
+                    transform: scale(1);
+                  }
+                  50% {
+                    transform: scale(1.1);
+                  }
+                }
+                
+                @keyframes rotate-3d {
+                  0% {
+                    transform: rotateX(0deg) rotateY(0deg);
+                  }
+                  100% {
+                    transform: rotateX(360deg) rotateY(360deg);
+                  }
+                }
+                
+                .touch-indicator {
+                  animation: pulse-ring 2s infinite, bounce-touch 1.5s ease-in-out infinite;
+                }
+                
+                .touch-cube {
+                  animation: rotate-3d 4s linear infinite;
+                  perspective: 1000px;
+                }
+                
+                .touch-finger {
+                  animation: bounce-touch 1.5s ease-in-out infinite;
+                }
+              `}</style>
+              
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                <div className="touch-cube relative w-16 h-16 flex items-center justify-center">
+                  <div className="absolute w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg border-2 border-purple-400" 
+                       style={{ transform: 'translateZ(28px)' }}>
+                    <div className="w-full h-full flex items-center justify-center text-white font-bold text-2xl">
+                      3D
+                    </div>
+                  </div>
+                  <div className="absolute w-14 h-14 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg border-2 border-purple-500" 
+                       style={{ transform: 'translateZ(-28px)' }}>
+                  </div>
+                </div>
+                
+                <div className="absolute -bottom-12 text-center">
+                  <p className="text-sm font-semibold text-purple-500">Toca para interactuar</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+  )
+}
