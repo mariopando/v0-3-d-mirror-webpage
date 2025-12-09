@@ -3,6 +3,7 @@
 import React from "react"
 import { useEffect, useRef, useState } from "react"
 import * as THREE from "three"
+// @ts-expect-error - Three.js examples don't have TypeScript declarations
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 import { RadioGroup } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"

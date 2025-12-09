@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import * as THREE from "three"
+// @ts-expect-error - Three.js examples don't have TypeScript declarations
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 import { useTheme } from "next-themes"
 

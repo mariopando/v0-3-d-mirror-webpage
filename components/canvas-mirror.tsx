@@ -12,7 +12,7 @@ interface CanvasMirrorProps {
 
 const CanvasMirror = React.memo(function CanvasMirror({ width, height, depth, ledColor }: CanvasMirrorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     const canvas = canvasRef.current

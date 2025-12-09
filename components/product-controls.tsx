@@ -16,6 +16,14 @@ interface ProductControlsProps {
   setLedColor: (color: string) => void
   frameColor: string
   setFrameColor: (color: string) => void
+  fov?: number
+  setFov?: (fov: number) => void
+  aspect?: number
+  setAspect?: (aspect: number) => void
+  near?: number
+  setNear?: (near: number) => void
+  far?: number
+  setFar?: (far: number) => void
 }
 
 const ProductControls = React.memo(function ProductControls({
