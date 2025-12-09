@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, Suspense, useCallback, lazy } from "react"
+import { useState, useEffect, useRef, Suspense, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import ProductControls from "@/components/product-controls"
 import Navbar from "@/components/navbar"
@@ -9,13 +9,11 @@ import { Button } from "@/components/ui/button"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
+import InfinityMirror from "@/components/infinity-mirror"
+import InfiniteTable from "@/components/infinite-table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { InfoIcon } from "lucide-react"
-
-// Dynamically import heavy Three.js components to split bundle
-const InfinityMirror = lazy(() => import("@/components/infinity-mirror"))
-const InfiniteTable = lazy(() => import("@/components/infinite-table"))
 
 // Loading fallback component
 function ComponentLoader() {
@@ -174,14 +172,18 @@ export default function Home() {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="table" 
-                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg hidden md:block"
+                    disabled 
+                    className="w-full relative bg-transparent rounded-lg py-3 px-4 opacity-70 md:block"
                   >
-                    <h1 className="text-sm lg:text-lg font-bold gradient-text break-words whitespace-normal">Mesa de centro infinita</h1>
+                    <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Mesa de centro infinita</h1>
+                    <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
+                      ¡Pronto!
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="smart-mirror" 
                     disabled 
-                    className="w-full block relative bg-transparent rounded-lg py-3 px-4 opacity-70 hidden md:block"
+                    className="w-full relative bg-transparent rounded-lg py-3 px-4 opacity-70 md:block"
                   >
                     <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Espejo inteligente</h1>
                     <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
