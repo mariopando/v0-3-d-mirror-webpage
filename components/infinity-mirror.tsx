@@ -75,31 +75,18 @@ const InfinityMirror = React.memo(function InfinityMirror({
     camera.position.x = Math.max(widthUnits, heightUnits)
     camera.position.z = Math.max(widthUnits, heightUnits)
 
-    // Mobile detection for rendering optimization
-    const isMobileDevice = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    const isLowEndDevice = window.devicePixelRatio > 2
-
+    // Desktop-optimized renderer (no mobile constraints)
     const renderer = new THREE.WebGLRenderer({
-      antialias: !isMobileDevice(),  // Disable on mobile
+      antialias: true,  // Enable antialiasing on desktop
       powerPreference: "high-performance",
       alpha: true,  // Enable transparency
     })
     renderer.setSize(300, 300)
     
-    // Limit pixel ratio on mobile for better performance
-    const pixelRatio = isMobileDevice() 
-      ? Math.min(window.devicePixelRatio, 1.5)  // 1x-1.5x on mobile
-      : Math.min(window.devicePixelRatio, 2)     // 1x-2x on desktop
-
-    renderer.setPixelRatio(pixelRatio)
+    // Use full pixel ratio on desktop for sharp rendering
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
-    
-    // Simplify shadows on mobile
-    if (isMobileDevice()) {
-      renderer.shadowMap.type = THREE.BasicShadowMap  // Simpler shadows
-    } else {
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap  // Better shadows
-    }
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap  // High-quality shadows
     container.appendChild(renderer.domElement)
 
     // Track resources for proper cleanup
@@ -530,10 +517,10 @@ const InfinityMirror = React.memo(function InfinityMirror({
       }
 
     const createInfiniteEffect = (x: number, y: number, position: number, ledsArray: THREE.Mesh[]) => {
-      // OPTIMIZATION: Reduce the number of points for better performance
+      // OPTIMIZATION: Desktop only - use full quality rendering
       const maxDepth = 15
-      // Further reduce on mobile for better performance
-      const numPoints = isMobileDevice() ? 5 : 8
+      // Full quality on desktop since mobile uses Canvas 2D instead
+      const numPoints = 8
 
       for (let i = 0; i < numPoints; i++) {
         const depth = ((i + 1) / numPoints) * maxDepth
