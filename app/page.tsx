@@ -12,6 +12,8 @@ import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
 import InfinityMirror from "@/components/infinity-mirror"
 import InfiniteTable from "@/components/infinite-table"
+import CanvasMirror from "@/components/canvas-mirror"
+import { useDeviceType } from "@/hooks/use-device-type"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { InfoIcon } from "lucide-react"
@@ -43,12 +45,11 @@ function debounce<T extends (...args: any[]) => any>(
 
 export default function Home() {
   const router = useRouter()
+  const { deviceType, isMobile, isTablet, isDesktop } = useDeviceType()
   const [width, setWidth] = useState(40)
   const [height, setHeight] = useState(50)
   const [depth, setDepth] = useState(4)
   const [ledColor, setLedColor] = useState("rainbow")
-  const [isClient, setIsClient] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
   const [isAddedToCart, setIsAddedToCart] = useState(false)
   const [productType, setProductType] = useState("mirror")
   const { addToCart } = useCart()
@@ -85,21 +86,6 @@ export default function Home() {
     }
   }, [isMobile, scrollToTop])
 
-  // Fix hydration issues and detect mobile
-  useEffect(() => {
-    // setIsClient(true)
-    const checkMobile = debounce(() => {
-      setIsMobile(window.innerWidth < 768)
-    }, 150)
-    
-    checkMobile()
-    window.addEventListener('resize', checkMobile, { passive: true })
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile)
-    }
-  }, [])
-
   const calculatePrice = useCallback(() => {
     // Base price in Chilean Pesos (approx. 199 USD = ~180,000 CLP)
     const basePrice = 180000
@@ -133,17 +119,33 @@ export default function Home() {
           <div ref={topRef} className="w-full lg:w-1/2">
                 <Suspense fallback={<ComponentLoader />}>
                   {productType === "mirror" ? (
-                    <InfinityMirror
-                      width={width}
-                      height={height}
-                      depth={depth}
-                      ledColor={ledColor}
-                      frameColor={frameColor}
-                      fov={fov}
-                      aspect={aspect}
-                      near={near}
-                      far={far}
-                    />
+                    <>
+                      {/* Mobile/Tablet: Use Canvas 2D for better performance */}
+                      {!isDesktop && (
+                        <div className="flex justify-center">
+                          <CanvasMirror
+                            width={width}
+                            height={height}
+                            depth={depth}
+                            ledColor={ledColor}
+                          />
+                        </div>
+                      )}
+                      {/* Desktop: Use full 3D Three.js */}
+                      {isDesktop && (
+                        <InfinityMirror
+                          width={width}
+                          height={height}
+                          depth={depth}
+                          ledColor={ledColor}
+                          frameColor={frameColor}
+                          fov={fov}
+                          aspect={aspect}
+                          near={near}
+                          far={far}
+                        />
+                      )}
+                    </>
                   ) : (
                     <InfiniteTable
                       width={width}
