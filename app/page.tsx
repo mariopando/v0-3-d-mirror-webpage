@@ -12,7 +12,7 @@ import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
 import InfinityMirror from "@/components/infinity-mirror"
 import InfiniteTable from "@/components/infinite-table"
-import CanvasMirror from "@/components/canvas-mirror"
+import BabylonMirror from "@/components/babylon-mirror"
 import { useDeviceType } from "@/hooks/use-device-type"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -120,14 +120,15 @@ export default function Home() {
                 <Suspense fallback={<ComponentLoader />}>
                   {productType === "mirror" ? (
                     <>
-                      {/* Mobile/Tablet: Use Canvas 2D for better performance */}
+                      {/* Mobile/Tablet: Use Babylon.js for true 3D on mobile */}
                       {!isDesktop && (
                         <div className="flex justify-center">
-                          <CanvasMirror
+                          <BabylonMirror
                             width={width}
                             height={height}
                             depth={depth}
                             ledColor={ledColor}
+                            frameColor={frameColor}
                           />
                         </div>
                       )}
