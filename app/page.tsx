@@ -12,7 +12,7 @@ import { useCart } from "@/context/cart-context"
 import { formatCurrency } from "@/lib/utils"
 import InfinityMirror from "@/components/infinity-mirror"
 import InfiniteTable from "@/components/infinite-table"
-import BabylonMirror from "@/components/babylon-mirror"
+import AnimeMirror from "@/components/anime-mirror"
 import { useDeviceType } from "@/hooks/use-device-type"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -115,15 +115,16 @@ export default function Home() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <section className="flex flex-col lg:flex-row gap-8 items-center">
+        <section className="flex flex-col lg:flex-row gap-8 items-start">
+          {/* Left column: Mirror on mobile/tablet, both mirror and description on desktop */}
           <div ref={topRef} className="w-full lg:w-1/2">
                 <Suspense fallback={<ComponentLoader />}>
                   {productType === "mirror" ? (
                     <>
-                      {/* Mobile/Tablet: Use Babylon.js for true 3D on mobile */}
+                      {/* Mobile/Tablet: Use anime.js for lightweight smooth animations */}
                       {!isDesktop && (
                         <div className="flex justify-center">
-                          <BabylonMirror
+                          <AnimeMirror
                             width={width}
                             height={height}
                             depth={depth}
@@ -161,24 +162,28 @@ export default function Home() {
                     />
                   )}
                 </Suspense>
-                <ContactForm />
+                {/* Show contact form only on desktop */}
+                <div className="hidden lg:block">
+                  <ContactForm />
+                </div>
           </div>
+          {/* Right column: Controls and info */}
           <div className="w-full lg:w-1/2">
-            <h1 className="text-4xl text-center font-bold mb-4 gradient-text block md:hidden">Crea tu Espejo Infinito</h1>
-            <h1 className="text-4xl font-bold mb-4 gradient-text hidden md:block">Crea tu propio</h1>
-            <div className="tabs hidden md:block">
+            <h1 className="text-4xl text-center font-bold mb-4 gradient-text block lg:hidden">Crea tu Espejo Infinito</h1>
+            <h1 className="text-4xl font-bold mb-4 gradient-text hidden lg:block">Crea tu propio</h1>
+            <div className="tabs hidden lg:block">
               <Tabs value={productType} onValueChange={setProductType} className="w-full mb-6">
                 <TabsList className="flex flex-col lg:flex-row w-full bg-transparent p-0 gap-4">
                   <TabsTrigger 
                     value="mirror" 
-                    className="w-full block data-[state=active]:bg-transparent data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg py-3 px-4 rounded-lg border border-border hidden md:block"
+                    className="w-full block data-[state=active]:bg-transparent data-[state=active]:border-2 data-[state=active]:border-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:shadow-lg py-3 px-4 rounded-lg border border-border hidden lg:block"
                   >
                     <h1 className="text-base lg:text-2xl font-bold gradient-text break-words whitespace-normal">Espejo infinito</h1>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="table" 
                     disabled 
-                    className="w-full relative bg-transparent rounded-lg py-3 px-4 opacity-70 md:block"
+                    className="w-full relative bg-transparent rounded-lg py-3 px-4 opacity-70 lg:block"
                   >
                     <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Mesa de centro infinita</h1>
                     <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
@@ -188,7 +193,7 @@ export default function Home() {
                   <TabsTrigger 
                     value="smart-mirror" 
                     disabled 
-                    className="w-full relative bg-transparent rounded-lg py-3 px-4 opacity-70 md:block"
+                    className="w-full relative bg-transparent rounded-lg py-3 px-4 opacity-70 lg:block"
                   >
                     <h1 className="text-sm lg:text-lg font-bold text-muted-foreground break-words whitespace-normal">Espejo inteligente</h1>
                     <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
@@ -197,7 +202,7 @@ export default function Home() {
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="mirror" className="mt-6">
-                  <p className="text-2xl text-muted-foreground mb-6 leading-relaxed gap-4 text-center hidden md:block">
+                  <p className="text-2xl text-muted-foreground mb-6 leading-relaxed gap-4 text-center hidden lg:block">
                     Descubre la experiencia sensorial de nuestros espejos infinitos de edición maestra.
                     Cada pieza es una sinfonía de precisión milimétrica y artesanía experta, elige y personalizalo como quieras!
                   </p>
@@ -268,6 +273,7 @@ export default function Home() {
                   <li>Espejo: 2mm espesor</li>
                   <li>Led: Con conexion WiFi y/o Bluetooth a traves de app para Android/iOS</li>
                   <li>Alimentación por USB</li>
+                  <li>Del taller al hogar, sin intermediarios</li>
                   <li>Despacho a todo Chile, en 48 horas para productos prefabricados y de 6 a 12 días para productos personalizados</li>
                 </ul>
               </div>
