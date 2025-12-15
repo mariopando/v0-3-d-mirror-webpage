@@ -13,7 +13,9 @@ import { formatCurrency } from "@/lib/utils"
 import InfinityMirror from "@/components/infinity-mirror"
 import InfiniteTable from "@/components/infinite-table"
 import AnimeMirror from "@/components/anime-mirror"
+import MobileInfinityMirror from "@/components/mobile-infinity-mirror"
 import { useDeviceType } from "@/hooks/use-device-type"
+import { useHardwareCapability } from "@/hooks/use-hardware-capability"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { InfoIcon } from "lucide-react"
@@ -46,6 +48,7 @@ function debounce<T extends (...args: any[]) => any>(
 export default function Home() {
   const router = useRouter()
   const { deviceType, isMobile, isTablet, isDesktop } = useDeviceType()
+  const hardwareCapability = useHardwareCapability()
   const [width, setWidth] = useState(40)
   const [height, setHeight] = useState(50)
   const [depth, setDepth] = useState(4)
@@ -121,18 +124,6 @@ export default function Home() {
                 <Suspense fallback={<ComponentLoader />}>
                   {productType === "mirror" ? (
                     <>
-                      {/* Mobile/Tablet: Use anime.js for lightweight smooth animations */}
-                      {!isDesktop && (
-                        <div className="flex justify-center">
-                          <AnimeMirror
-                            width={width}
-                            height={height}
-                            depth={depth}
-                            ledColor={ledColor}
-                            frameColor={frameColor}
-                          />
-                        </div>
-                      )}
                       {/* Desktop: Use full 3D Three.js */}
                       {isDesktop && (
                         <InfinityMirror
@@ -146,6 +137,31 @@ export default function Home() {
                           near={near}
                           far={far}
                         />
+                      )}
+                      {/* Mobile/Tablet: Hardware-aware rendering */}
+                      {!isDesktop && (
+                        <div className="flex justify-center">
+                          {hardwareCapability.recommendedRenderer === 'threejs' && hardwareCapability.canUseWebGL2 ? (
+                            // High-end mobile: Use Three.js
+                            <MobileInfinityMirror
+                              width={width}
+                              height={height}
+                              depth={depth}
+                              ledColor={ledColor}
+                              frameColor={frameColor}
+                              performanceScore={hardwareCapability.performanceScore}
+                            />
+                          ) : (
+                            // Low-end mobile: Use Canvas
+                            <AnimeMirror
+                              width={width}
+                              height={height}
+                              depth={depth}
+                              ledColor={ledColor}
+                              frameColor={frameColor}
+                            />
+                          )}
+                        </div>
                       )}
                     </>
                   ) : (
