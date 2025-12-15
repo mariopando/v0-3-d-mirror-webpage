@@ -32,8 +32,18 @@ const AnimeMirror = React.memo(function AnimeMirror({
     // Canvas size
     const canvasSize = 400
     const padding = 40
-    const mirrorWidth = canvasSize - padding * 2
-    const mirrorHeight = canvasSize - padding * 2
+    const baseCanvasSize = canvasSize - padding * 2
+    
+    // Scale mirror dimensions based on width/height/depth controls
+    // width and height are in cm (40-80), depth is unitless (1-10)
+    // Normalize width/height to 0.5-1.5 scale factor
+    const widthScale = (width - 40) / (80 - 40) * 0.5 + 0.75 // 0.75-1.25
+    const heightScale = (height - 40) / (80 - 40) * 0.5 + 0.75 // 0.75-1.25
+    const depthScale = (depth - 1) / (10 - 1) * 0.4 + 0.8 // 0.8-1.2
+    
+    // Apply scales to mirror dimensions
+    const mirrorWidth = baseCanvasSize * widthScale
+    const mirrorHeight = baseCanvasSize * heightScale
 
     // Get frame color
     const getFrameColor = (): string => {
@@ -104,7 +114,8 @@ const AnimeMirror = React.memo(function AnimeMirror({
       ctx.fillRect(0, 0, canvasSize, canvasSize)
 
       // Draw prominent outer frame (photo frame effect)
-      const frameThickness = 15
+      // Frame thickness scales with depth parameter (1-10 maps to 8-20px)
+      const frameThickness = 8 + (depth - 1) / (10 - 1) * 12
       const frameX = centerX - displayMirrorWidth / 2 - frameThickness
       const frameY = centerY - displayMirrorHeight / 2 - frameThickness
       const frameW = displayMirrorWidth + frameThickness * 2
